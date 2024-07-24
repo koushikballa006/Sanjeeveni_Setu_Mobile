@@ -1,20 +1,52 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import SplashScreen from "./screens/SplashScreen";
+import PhoneAuthScreen from "./screens/PhoneAuthScreen";
+import OtpVerificationScreen from "./screens/OtpVerificationScreen";
+import RegistrationScreen from "./screens/RegistrationScreen";
+import HomeTabs from "./screens/HomeTabs"; // Ensure you import HomeTabs correctly
 
-export default function App() {
+const Stack = createStackNavigator();
+
+const App = () => {
+  const [appIsReady, setAppIsReady] = useState(false);
+
+  const handleFinishLoading = () => {
+    setAppIsReady(true);
+  };
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Splash">
+        <Stack.Screen name="Splash" options={{ headerShown: false }}>
+          {(props) => (
+            <SplashScreen {...props} onFinish={handleFinishLoading} />
+          )}
+        </Stack.Screen>
+        <Stack.Screen
+          name="PhoneAuth"
+          component={PhoneAuthScreen}
+          options={{ title: "Phone Authentication" }}
+        />
+        <Stack.Screen
+          name="OtpVerification"
+          component={OtpVerificationScreen}
+          options={{ title: "OTP Verification" }}
+        />
+        <Stack.Screen
+          name="Registration"
+          component={RegistrationScreen}
+          options={{ title: "Registration" }}
+        />
+        <Stack.Screen
+          name="Home"
+          component={HomeTabs} // Use HomeTabs here
+          options={{ headerShown: false }} // Hide header for Home screen
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default App;

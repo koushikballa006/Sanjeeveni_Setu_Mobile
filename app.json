@@ -7,9 +7,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/splash-removebg.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": true
@@ -21,7 +21,19 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "config": {
+        "firebase": {
+          "apiKey": "AIzaSyBktd4qBD5nmtyBVxMoUr4RryliQJQSnGg",
+          "authDomain": "sanjeevenisetu.firebaseapp.com",
+          "databaseURL": "https://sanjeevenisetu-default-rtdb.asia-southeast1.firebasedatabase.app",
+          "projectId": "sanjeevenisetu",
+          "storageBucket": "sanjeevenisetu.appspot.com",
+          "messagingSenderId": "506843184775",
+          "appId": "1:506843184775:web:4dfbb4f0b8c667f48f0222",
+          "measurementId": "G-903PJFCT98"
+        }
+      }
     }
   }
 }
