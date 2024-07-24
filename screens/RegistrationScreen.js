@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useState } from "react";
 import {
   View,
@@ -12,8 +13,6 @@ import {
 import RNPickerSelect from "react-native-picker-select";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Icon from "react-native-vector-icons/Ionicons";
-import { ref, push } from "firebase/database";
-import { database } from "../firebase"; // Ensure the correct path to your firebase.js file
 
 const RegistrationScreen = ({ navigation }) => {
   const [firstName, setFirstName] = useState("");
@@ -24,6 +23,8 @@ const RegistrationScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [address, setAddress] = useState("");
 
   const handleRegister = async () => {
     if (!validateEmail(email)) {
@@ -39,22 +40,48 @@ const RegistrationScreen = ({ navigation }) => {
       return;
     }
 
+    const userDetails = {
+      username: email, // Using email as username
+      password,
+      email,
+      fullName: `${firstName} ${lastName}`, // Combined first and last names
+      dateOfBirth: dob.toISOString().split("T")[0], // Store date as YYYY-MM-DD
+      gender,
+      phoneNumber,
+      address,
+    };
+
     try {
-      await push(ref(database, "users"), {
-        firstName,
-        lastName,
-        dob: dob.toISOString().split("T")[0], // Store date as YYYY-MM-DD
-        gender,
-        email,
-        password,
-      });
+      console.log("Sending request to API with details:", userDetails);
+      const response = await axios.post(
+        "http://172.20.10.4:8000/api/users/register",
+        userDetails,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Response data:", response.data);
 
       // Navigate to HomeScreen upon successful registration
       navigation.navigate("Home");
 
       Alert.alert("Success", "Registration successful");
     } catch (error) {
-      Alert.alert("Error", error.message);
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        console.error("Response headers:", error.response.headers);
+        Alert.alert("Error", error.response.data.message || "An error occurred during registration");
+      } else if (error.request) {
+        console.error("Request data:", error.request);
+        Alert.alert("Error", "No response received from server. Please check your network connection.");
+      } else {
+        console.error("Error message:", error.message);
+        Alert.alert("Error", "An error occurred: " + error.message);
+      }
     }
   };
 
@@ -113,9 +140,9 @@ const RegistrationScreen = ({ navigation }) => {
         onValueChange={(value) => setGender(value)}
         placeholder={{ label: "Select Gender", value: null }}
         items={[
-          { label: "Male", value: "male" },
-          { label: "Female", value: "female" },
-          { label: "Other", value: "other" },
+          { label: "Male", value: "Male" },
+          { label: "Female", value: "Female" },
+          { label: "Other", value: "Other" },
         ]}
       />
       <TextInput
@@ -138,6 +165,18 @@ const RegistrationScreen = ({ navigation }) => {
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Phone Number"
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Address"
+        value={address}
+        onChangeText={setAddress}
       />
       <Button title="Register" onPress={handleRegister} />
     </ScrollView>
