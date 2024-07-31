@@ -1,131 +1,161 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
-  StyleSheet,
+  Text,
   TextInput,
-  StatusBar,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  SafeAreaView,
   ScrollView,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import { Button, Text } from "react-native-elements";
-import { auth } from "../firebase";
-import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
+import axios from "axios";
 
-const OtpVerificationScreen = ({ route, navigation }) => {
-  const { verificationId, phoneNumber } = route.params;
-  const [verificationCode, setVerificationCode] = useState("");
-  const [message, setMessage] = useState("");
+const { width, height } = Dimensions.get("window");
 
-  const inputRefs = useRef([]);
+const responsiveWidth = (percent) => (width * percent) / 100;
+const responsiveHeight = (percent) => (height * percent) / 100;
+const responsiveFontSize = (size) => (width / 375) * size;
 
-  const handleChange = (text, index) => {
-    let newVerificationCode = verificationCode.split("");
-    newVerificationCode[index] = text;
-    setVerificationCode(newVerificationCode.join(""));
+const OtpVerificationScreen = ({ navigation }) => {
+  const [otp, setOtp] = useState(["", "", "", ""]);
 
-    // Move focus to the next input
-    if (text && index < inputRefs.current.length - 1) {
-      inputRefs.current[index + 1].focus();
+  const handleOtpChange = (text, index) => {
+    const newOtp = [...otp];
+    newOtp[index] = text;
+    setOtp(newOtp);
+
+    // Move to next field automatically
+    if (text && index < 3) {
+      document.querySelector(`input[name='otp${index + 1}']`).focus();
     }
   };
 
-  const confirmVerificationCode = async () => {
+  const handleVerifyOtp = async () => {
+    const otpCode = otp.join("");
+    if (otpCode.length < 4) {
+      Alert.alert("Error", "Please enter a complete OTP");
+      return;
+    }
+
     try {
-      const credential = PhoneAuthProvider.credential(
-        verificationId,
-        verificationCode
+      console.log("Sending OTP to API for verification:", otpCode);
+      const response = await axios.post(
+        "http://172.20.10.2:8000/api/users/verify-phone-otp",
+        { otp: otpCode },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
-      await signInWithCredential(auth, credential);
-      setMessage("Phone number verified successfully.");
-      // Navigate to the registration screen
-      navigation.navigate("Registration");
+
+      console.log("Response data:", response.data);
+      navigation.navigate("Home");
+
+      Alert.alert("Success", "OTP verified successfully");
     } catch (error) {
-      setMessage(`Error: ${error.message}`);
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        Alert.alert(
+          "Error",
+          error.response.data.message || "OTP verification failed"
+        );
+      } else if (error.request) {
+        console.error("Request data:", error.request);
+        Alert.alert(
+          "Error",
+          "No response received from server. Please check your network connection."
+        );
+      } else {
+        console.error("Error message:", error.message);
+        Alert.alert("Error", "An error occurred: " + error.message);
+      }
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        <StatusBar barStyle="dark-content" />
-        <Text style={styles.title}>OTP Verification</Text>
-        <Text style={styles.subtitle}>Verify {phoneNumber}</Text>
-        <View style={styles.otpContainer}>
-          {[...Array(6)].map((_, index) => (
-            <TextInput
-              key={index}
-              style={styles.otpInput}
-              keyboardType="numeric"
-              maxLength={1}
-              value={verificationCode[index]}
-              onChangeText={(text) => handleChange(text, index)}
-              ref={(ref) => (inputRefs.current[index] = ref)}
-            />
-          ))}
-        </View>
-        <Button
-          title="Confirm Verification Code"
-          onPress={confirmVerificationCode}
-          buttonStyle={styles.button}
-        />
-        {message ? <Text style={styles.message}>{message}</Text> : null}
-      </View>
-    </ScrollView>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : null}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>Verify OTP</Text>
+          <View style={styles.otpContainer}>
+            {otp.map((value, index) => (
+              <TextInput
+                key={index}
+                style={styles.otpInput}
+                maxLength={1}
+                keyboardType="numeric"
+                value={value}
+                onChangeText={(text) => handleOtpChange(text, index)}
+                name={`otp${index}`}
+              />
+            ))}
+          </View>
+          <TouchableOpacity
+            style={styles.verifyButton}
+            onPress={handleVerifyOtp}
+          >
+            <Text style={styles.verifyButtonText}>Verify OTP</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollContainer: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F0F8FF",
+  },
+  container: {
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 20,
-    backgroundColor: "#fff",
-  },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    backgroundColor: "#fff",
+    padding: responsiveWidth(4),
   },
   title: {
-    fontSize: 24,
-    marginBottom: 20,
-    textAlign: "center",
-    color: "#008000", // Green color
-  },
-  subtitle: {
-    fontSize: 18,
-    textAlign: "center",
-    color: "#000",
-    marginBottom: 20,
+    fontSize: responsiveFontSize(24),
+    fontWeight: "bold",
+    color: "#4CAF50",
+    marginBottom: responsiveHeight(2),
   },
   otpContainer: {
     flexDirection: "row",
-    justifyContent: "space-evenly",
-    marginVertical: 20,
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: responsiveHeight(2),
   },
   otpInput: {
+    width: responsiveWidth(12),
+    height: responsiveHeight(6),
+    borderColor: "#ccc",
     borderWidth: 1,
-    borderColor: "#008000", // Green color
-    borderRadius: 5,
-    width: 40,
-    height: 40,
+    borderRadius: 10,
     textAlign: "center",
-    fontSize: 18,
-    color: "#000",
-    backgroundColor: "#fff",
-    marginHorizontal: 5,
+    fontSize: responsiveFontSize(20),
+    marginHorizontal: responsiveWidth(1),
   },
-  button: {
-    marginTop: 10,
-    backgroundColor: "#008000",
-    borderRadius: 5,
+  verifyButton: {
+    backgroundColor: "#4CAF50",
+    borderRadius: 10,
+    paddingVertical: responsiveHeight(1.5),
+    paddingHorizontal: responsiveWidth(8),
+    alignItems: "center",
+    marginTop: responsiveHeight(2),
   },
-  message: {
-    marginTop: 20,
-    textAlign: "center",
-    color: "#d9534f",
+  verifyButtonText: {
+    color: "#fff",
+    fontSize: responsiveFontSize(18),
+    fontWeight: "bold",
   },
 });
 

@@ -5,14 +5,23 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  Button,
   Alert,
   ScrollView,
   TouchableOpacity,
+  SafeAreaView,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import RNPickerSelect from "react-native-picker-select";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Icon from "react-native-vector-icons/Ionicons";
+
+const { width, height } = Dimensions.get("window");
+
+const responsiveWidth = (percent) => (width * percent) / 100;
+const responsiveHeight = (percent) => (height * percent) / 100;
+const responsiveFontSize = (size) => (width / 375) * size;
 
 const RegistrationScreen = ({ navigation }) => {
   const [firstName, setFirstName] = useState("");
@@ -23,6 +32,7 @@ const RegistrationScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [countryCode, setCountryCode] = useState("+1"); // Default country code
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
 
@@ -41,20 +51,20 @@ const RegistrationScreen = ({ navigation }) => {
     }
 
     const userDetails = {
-      username: email, // Using email as username
+      username: email,
       password,
       email,
-      fullName: `${firstName} ${lastName}`, // Combined first and last names
-      dateOfBirth: dob.toISOString().split("T")[0], // Store date as YYYY-MM-DD
+      fullName: `${firstName} ${lastName}`,
+      dateOfBirth: dob.toISOString().split("T")[0],
       gender,
-      phoneNumber,
+      phoneNumber: `${countryCode}${phoneNumber}`,
       address,
     };
 
     try {
       console.log("Sending request to API with details:", userDetails);
       const response = await axios.post(
-        "http://172.20.10.4:8000/api/users/register",
+        "http://172.20.10.2:8000/api/users/register",
         userDetails,
         {
           headers: {
@@ -65,7 +75,6 @@ const RegistrationScreen = ({ navigation }) => {
 
       console.log("Response data:", response.data);
 
-      // Navigate to HomeScreen upon successful registration
       navigation.navigate("Home");
 
       Alert.alert("Success", "Registration successful");
@@ -74,10 +83,16 @@ const RegistrationScreen = ({ navigation }) => {
         console.error("Response data:", error.response.data);
         console.error("Response status:", error.response.status);
         console.error("Response headers:", error.response.headers);
-        Alert.alert("Error", error.response.data.message || "An error occurred during registration");
+        Alert.alert(
+          "Error",
+          error.response.data.message || "An error occurred during registration"
+        );
       } else if (error.request) {
         console.error("Request data:", error.request);
-        Alert.alert("Error", "No response received from server. Please check your network connection.");
+        Alert.alert(
+          "Error",
+          "No response received from server. Please check your network connection."
+        );
       } else {
         console.error("Error message:", error.message);
         Alert.alert("Error", "An error occurred: " + error.message);
@@ -97,160 +112,250 @@ const RegistrationScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Registration Screen</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="First Name"
-        value={firstName}
-        onChangeText={setFirstName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Last Name"
-        value={lastName}
-        onChangeText={setLastName}
-      />
-      <View style={styles.dateInputContainer}>
-        <TextInput
-          style={styles.dateInput}
-          placeholder="Date of Birth"
-          value={dob ? dob.toDateString() : ""}
-          editable={false}
-        />
-        <TouchableOpacity
-          onPress={() => setShowDatePicker(true)}
-          style={styles.iconContainer}
-        >
-          <Icon name="calendar" size={24} color="gray" />
-        </TouchableOpacity>
-      </View>
-      {showDatePicker && (
-        <DateTimePicker
-          value={dob}
-          mode="date"
-          display="default"
-          onChange={onDateChange}
-          maximumDate={new Date(2024, 12, 31)}
-          minimumDate={new Date(1900, 0, 1)}
-        />
-      )}
-      <RNPickerSelect
-        style={pickerSelectStyles}
-        onValueChange={(value) => setGender(value)}
-        placeholder={{ label: "Select Gender", value: null }}
-        items={[
-          { label: "Male", value: "Male" },
-          { label: "Female", value: "Female" },
-          { label: "Other", value: "Other" },
-        ]}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Phone Number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Address"
-        value={address}
-        onChangeText={setAddress}
-      />
-      <Button title="Register" onPress={handleRegister} />
-    </ScrollView>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : null}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>Registration</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="First Name"
+            value={firstName}
+            onChangeText={setFirstName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Last Name"
+            value={lastName}
+            onChangeText={setLastName}
+          />
+          <View style={styles.dateInputContainer}>
+            <TextInput
+              style={styles.dateInput}
+              placeholder="Date of Birth"
+              value={dob ? dob.toDateString() : ""}
+              editable={false}
+            />
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              style={styles.iconContainer}
+            >
+              <Icon
+                name="calendar"
+                size={responsiveFontSize(24)}
+                color="gray"
+              />
+            </TouchableOpacity>
+          </View>
+          {showDatePicker && (
+            <DateTimePicker
+              value={dob}
+              mode="date"
+              display="default"
+              onChange={onDateChange}
+              maximumDate={new Date(2024, 12, 31)}
+              minimumDate={new Date(1900, 0, 1)}
+            />
+          )}
+          <RNPickerSelect
+            style={pickerSelectStyles}
+            onValueChange={(value) => setGender(value)}
+            placeholder={{ label: "Select Gender", value: null }}
+            items={[
+              { label: "Male", value: "Male" },
+              { label: "Female", value: "Female" },
+              { label: "Other", value: "Other" },
+            ]}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+          />
+          <View style={styles.phoneInputContainer}>
+            <View style={styles.countryCodeContainer}>
+              <RNPickerSelect
+                onValueChange={(value) => setCountryCode(value)}
+                placeholder={{ label: "+1", value: "+1" }} // Default country code
+                items={[
+                  { label: "+1", value: "+1" },
+                  { label: "+44", value: "+44" },
+                  { label: "+91", value: "+91" },
+                  // Add more country codes as needed
+                ]}
+                style={pickerSelectCountryCodeStyles}
+              />
+            </View>
+            <TextInput
+              style={styles.phoneInput}
+              placeholder="Phone Number"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+            />
+          </View>
+          <TextInput
+            style={styles.input}
+            placeholder="Address"
+            value={address}
+            onChangeText={setAddress}
+          />
+          <TouchableOpacity
+            style={styles.registerButton}
+            onPress={handleRegister}
+          >
+            <Text style={styles.registerButtonText}>Register</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F0F8FF",
+  },
   container: {
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 20,
+    padding: responsiveWidth(4),
   },
   title: {
-    fontSize: 24,
+    fontSize: responsiveFontSize(24),
     fontWeight: "bold",
-    marginBottom: 20,
+    color: "#4CAF50",
+    marginBottom: responsiveHeight(2),
   },
   input: {
     width: "100%",
-    height: 40,
+    height: responsiveHeight(6),
     borderColor: "#ccc",
     borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginBottom: responsiveHeight(2),
+    paddingHorizontal: responsiveWidth(4),
+    fontSize: responsiveFontSize(16),
   },
   dateInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
-    height: 40,
+    height: responsiveHeight(6),
     borderColor: "#ccc",
     borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginBottom: responsiveHeight(2),
+    paddingHorizontal: responsiveWidth(4),
   },
   dateInput: {
     flex: 1,
     height: "100%",
+    fontSize: responsiveFontSize(16),
   },
   iconContainer: {
     justifyContent: "center",
     alignItems: "center",
-    marginLeft: 10,
+    marginLeft: responsiveWidth(2),
+  },
+  phoneInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    height: responsiveHeight(6),
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: responsiveHeight(2),
+  },
+  countryCodeContainer: {
+    width: "30%",
+    height: "100%",
+    justifyContent: "center",
+    borderRightWidth: 1,
+    borderRightColor: "#ccc",
+  },
+  phoneInput: {
+    flex: 1,
+    height: "100%",
+    fontSize: responsiveFontSize(16),
+    paddingHorizontal: responsiveWidth(4),
+  },
+  registerButton: {
+    backgroundColor: "#4CAF50",
+    borderRadius: 10,
+    paddingVertical: responsiveHeight(1.5),
+    paddingHorizontal: responsiveWidth(8),
+    alignItems: "center",
+    marginTop: responsiveHeight(2),
+  },
+  registerButtonText: {
+    color: "#fff",
+    fontSize: responsiveFontSize(18),
+    fontWeight: "bold",
   },
 });
 
 const pickerSelectStyles = StyleSheet.create({
   inputIOS: {
-    fontSize: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
+    fontSize: responsiveFontSize(16),
+    paddingVertical: responsiveHeight(1.5),
+    paddingHorizontal: responsiveWidth(4),
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 5,
+    borderRadius: 10,
     color: "black",
-    paddingRight: 30, // to ensure the text is never behind the icon
-    marginBottom: 10,
+    paddingRight: responsiveWidth(8),
+    marginBottom: responsiveHeight(2),
     width: "100%",
   },
   inputAndroid: {
-    fontSize: 18,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderWidth: 0.5,
+    fontSize: responsiveFontSize(16),
+    paddingHorizontal: responsiveWidth(4),
+    paddingVertical: responsiveHeight(1.5),
+    borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 5,
+    borderRadius: 10,
     color: "black",
-    paddingRight: 30, // to ensure the text is never behind the icon
-    marginBottom: 10,
+    paddingRight: responsiveWidth(8),
+    marginBottom: responsiveHeight(2),
     width: "100%",
+  },
+});
+
+const pickerSelectCountryCodeStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: responsiveFontSize(16),
+    paddingVertical: responsiveHeight(1.5),
+    paddingHorizontal: responsiveWidth(2),
+    color: "black",
+  },
+  inputAndroid: {
+    fontSize: responsiveFontSize(16),
+    paddingVertical: responsiveHeight(1.5),
+    paddingHorizontal: responsiveWidth(2),
+    color: "black",
   },
 });
 
