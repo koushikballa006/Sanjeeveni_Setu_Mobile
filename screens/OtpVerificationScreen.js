@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -20,8 +20,12 @@ const responsiveWidth = (percent) => (width * percent) / 100;
 const responsiveHeight = (percent) => (height * percent) / 100;
 const responsiveFontSize = (size) => (width / 375) * size;
 
-const OtpVerificationScreen = ({ navigation }) => {
-  const [otp, setOtp] = useState(["", "", "", ""]);
+const OtpVerificationScreen = ({ navigation, route }) => {
+  const { userId } = route.params;  // Accessing userId from route.params
+  console.log("Received userId:", userId);  // Logging userId to verify
+
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const otpRefs = useRef([]);
 
   const handleOtpChange = (text, index) => {
     const newOtp = [...otp];
@@ -29,23 +33,25 @@ const OtpVerificationScreen = ({ navigation }) => {
     setOtp(newOtp);
 
     // Move to next field automatically
-    if (text && index < 3) {
-      document.querySelector(`input[name='otp${index + 1}']`).focus();
+    if (text && index < otpRefs.current.length - 1) {
+      otpRefs.current[index + 1].focus();
     }
   };
 
   const handleVerifyOtp = async () => {
     const otpCode = otp.join("");
-    if (otpCode.length < 4) {
+    if (otpCode.length < 6) {
       Alert.alert("Error", "Please enter a complete OTP");
       return;
     }
 
+    console.log("User ID:", userId);
+    console.log("OTP Code:", otpCode);
+
     try {
-      console.log("Sending OTP to API for verification:", otpCode);
       const response = await axios.post(
         "http://172.20.10.2:8000/api/users/verify-phone-otp",
-        { otp: otpCode },
+        { userId, otp: otpCode },  // Ensure this format matches the backend
         {
           headers: {
             "Content-Type": "application/json",
@@ -54,9 +60,13 @@ const OtpVerificationScreen = ({ navigation }) => {
       );
 
       console.log("Response data:", response.data);
-      navigation.navigate("Home");
 
-      Alert.alert("Success", "OTP verified successfully");
+      if (response.data.message === "Phone number verified successfully") {
+        Alert.alert("Success", "OTP verified successfully");
+        navigation.navigate("Home");
+      } else {
+        Alert.alert("Error", response.data.message || "OTP verification failed");
+      }
     } catch (error) {
       if (error.response) {
         console.error("Response data:", error.response.data);
@@ -90,12 +100,16 @@ const OtpVerificationScreen = ({ navigation }) => {
             {otp.map((value, index) => (
               <TextInput
                 key={index}
+                ref={(ref) => (otpRefs.current[index] = ref)}
                 style={styles.otpInput}
                 maxLength={1}
                 keyboardType="numeric"
                 value={value}
                 onChangeText={(text) => handleOtpChange(text, index)}
-                name={`otp${index}`}
+                onSubmitEditing={() =>
+                  index < otpRefs.current.length - 1 &&
+                  otpRefs.current[index + 1].focus()
+                }
               />
             ))}
           </View>

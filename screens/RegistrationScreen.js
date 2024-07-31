@@ -49,7 +49,7 @@ const RegistrationScreen = ({ navigation }) => {
       Alert.alert("Error", "Password should be at least 6 characters long");
       return;
     }
-
+  
     const userDetails = {
       username: email,
       password,
@@ -60,7 +60,7 @@ const RegistrationScreen = ({ navigation }) => {
       phoneNumber: `${countryCode}${phoneNumber}`,
       address,
     };
-
+  
     try {
       console.log("Sending request to API with details:", userDetails);
       const response = await axios.post(
@@ -72,12 +72,16 @@ const RegistrationScreen = ({ navigation }) => {
           },
         }
       );
-
+  
       console.log("Response data:", response.data);
-
-      navigation.navigate("Home");
-
-      Alert.alert("Success", "Registration successful");
+  
+      // Extract userId from the response
+      const { userId } = response.data;
+  
+      // Navigate to OTP Verification Screen and pass userId and user details
+      navigation.navigate("OtpVerification", { userId, ...userDetails });
+  
+      Alert.alert("Success", "Registration successful. Please verify OTP.");
     } catch (error) {
       if (error.response) {
         console.error("Response data:", error.response.data);
