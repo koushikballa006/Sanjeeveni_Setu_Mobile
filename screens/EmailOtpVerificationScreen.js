@@ -20,9 +20,8 @@ const responsiveWidth = (percent) => (width * percent) / 100;
 const responsiveHeight = (percent) => (height * percent) / 100;
 const responsiveFontSize = (size) => (width / 375) * size;
 
-const OtpVerificationScreen = ({ navigation, route }) => {
+const EmailOtpVerificationScreen = ({ navigation, route }) => {
   const { userId } = route.params;  // Accessing userId from route.params
-  console.log("Received userId:", userId);  // Logging userId to verify
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const otpRefs = useRef([]);
@@ -44,13 +43,13 @@ const OtpVerificationScreen = ({ navigation, route }) => {
       Alert.alert("Error", "Please enter a complete OTP");
       return;
     }
-  
+
     console.log("User ID:", userId);
     console.log("OTP Code:", otpCode);
-  
+
     try {
       const response = await axios.post(
-        "http://172.20.10.2:8000/api/users/verify-phone-otp",
+        "http://172.20.10.2:8000/api/users/verify-email-otp",
         { userId, otp: otpCode },  // Ensure this format matches the backend
         {
           headers: {
@@ -58,21 +57,21 @@ const OtpVerificationScreen = ({ navigation, route }) => {
           },
         }
       );
-  
+
       console.log("Response data:", response.data);
-  
-      if (response.data.message === "Phone number verified successfully") {
-        Alert.alert("Success", "OTP verified successfully");
-        navigation.navigate("EmailOtpVerification", { userId }); // Pass userId here
+
+      if (response.data.message === "Email verified successfully") {
+        Alert.alert("Success", "Email verified successfully");
+        navigation.navigate("Home");
       } else {
-        Alert.alert("Error", response.data.message || "OTP verification failed");
+        Alert.alert("Error", response.data.message || "Email verification failed");
       }
     } catch (error) {
       if (error.response) {
         console.error("Response data:", error.response.data);
         Alert.alert(
           "Error",
-          error.response.data.message || "OTP verification failed"
+          error.response.data.message || "Email verification failed"
         );
       } else if (error.request) {
         console.error("Request data:", error.request);
@@ -95,7 +94,7 @@ const OtpVerificationScreen = ({ navigation, route }) => {
         keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>Verify OTP</Text>
+          <Text style={styles.title}>Verify Email OTP</Text>
           <View style={styles.otpContainer}>
             {otp.map((value, index) => (
               <TextInput
@@ -173,4 +172,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OtpVerificationScreen;
+export default EmailOtpVerificationScreen;

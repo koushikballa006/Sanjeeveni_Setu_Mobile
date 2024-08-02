@@ -5,7 +5,8 @@ import SplashScreen from "./screens/SplashScreen";
 import PhoneAuthScreen from "./screens/PhoneAuthScreen";
 import OtpVerificationScreen from "./screens/OtpVerificationScreen";
 import RegistrationScreen from "./screens/RegistrationScreen";
-import HomeTabs from "./screens/HomeTabs"; // Ensure you import HomeTabs correctly
+import EmailOtpVerification from "./screens/EmailOtpVerificationScreen";
+import HomeTabs from "./screens/HomeTabs"; 
 
 const Stack = createStackNavigator();
 
@@ -38,6 +39,11 @@ const App = () => {
           name="Registration"
           component={RegistrationScreen}
           options={{ title: "Registration" }}
+        />
+        <Stack.Screen
+          name="EmailOtpVerification"
+          component={EmailOtpVerification}
+          options={{ title: "Email OTP Verification" }}
         />
         <Stack.Screen
           name="Home"
