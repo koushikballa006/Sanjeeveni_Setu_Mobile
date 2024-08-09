@@ -7,6 +7,7 @@ import OtpVerificationScreen from "./screens/OtpVerificationScreen";
 import RegistrationScreen from "./screens/RegistrationScreen";
 import EmailOtpVerification from "./screens/EmailOtpVerificationScreen";
 import HomeTabs from "./screens/HomeTabs"; 
+import LoginScreen from "./screens/LoginScreen";
 
 const Stack = createStackNavigator();
 
@@ -49,6 +50,11 @@ const App = () => {
           name="Home"
           component={HomeTabs} // Use HomeTabs here
           options={{ headerShown: false }} // Hide header for Home screen
+        />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen} // Add LoginScreen here
+          options={{ title: "Login" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

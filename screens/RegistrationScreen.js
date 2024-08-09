@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, { useState } from "react";
 import {
   View,
@@ -16,6 +15,7 @@ import {
 import RNPickerSelect from "react-native-picker-select";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Icon from "react-native-vector-icons/Ionicons";
+import axios from "axios";
 
 const { width, height } = Dimensions.get("window");
 
@@ -49,7 +49,7 @@ const RegistrationScreen = ({ navigation }) => {
       Alert.alert("Error", "Password should be at least 6 characters long");
       return;
     }
-  
+
     const userDetails = {
       username: email,
       password,
@@ -60,7 +60,7 @@ const RegistrationScreen = ({ navigation }) => {
       phoneNumber: `${countryCode}${phoneNumber}`,
       address,
     };
-  
+
     try {
       console.log("Sending request to API with details:", userDetails);
       const response = await axios.post(
@@ -72,15 +72,15 @@ const RegistrationScreen = ({ navigation }) => {
           },
         }
       );
-  
+
       console.log("Response data:", response.data);
-  
+
       // Extract userId from the response
       const { userId } = response.data;
-  
+
       // Navigate to OTP Verification Screen and pass userId and user details
       navigation.navigate("OtpVerification", { userId, ...userDetails });
-  
+
       Alert.alert("Success", "Registration successful. Please verify OTP.");
     } catch (error) {
       if (error.response) {
@@ -229,6 +229,14 @@ const RegistrationScreen = ({ navigation }) => {
           >
             <Text style={styles.registerButtonText}>Register</Text>
           </TouchableOpacity>
+
+          {/* New "Already a user? Login" text */}
+          <View style={styles.loginTextContainer}>
+            <Text style={styles.alreadyUserText}>Already a user? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+              <Text style={styles.loginLinkText}>Login</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -281,30 +289,28 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: "center",
     alignItems: "center",
-    marginLeft: responsiveWidth(2),
+    paddingHorizontal: responsiveWidth(2),
   },
   phoneInputContainer: {
     flexDirection: "row",
-    alignItems: "center",
     width: "100%",
+    marginBottom: responsiveHeight(2),
+  },
+  countryCodeContainer: {
+    flex: 1,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    marginRight: responsiveWidth(2),
+  },
+  phoneInput: {
+    flex: 3,
     height: responsiveHeight(6),
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 10,
-    marginBottom: responsiveHeight(2),
-  },
-  countryCodeContainer: {
-    width: "30%",
-    height: "100%",
-    justifyContent: "center",
-    borderRightWidth: 1,
-    borderRightColor: "#ccc",
-  },
-  phoneInput: {
-    flex: 1,
-    height: "100%",
-    fontSize: responsiveFontSize(16),
     paddingHorizontal: responsiveWidth(4),
+    fontSize: responsiveFontSize(16),
   },
   registerButton: {
     backgroundColor: "#4CAF50",
@@ -319,47 +325,64 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(18),
     fontWeight: "bold",
   },
+  loginTextContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: responsiveHeight(2),
+  },
+  alreadyUserText: {
+    fontSize: responsiveFontSize(16),
+    color: "gray",
+  },
+  loginLinkText: {
+    fontSize: responsiveFontSize(16),
+    color: "#4CAF50",
+    fontWeight: "bold",
+  },
 });
 
 const pickerSelectStyles = StyleSheet.create({
   inputIOS: {
-    fontSize: responsiveFontSize(16),
-    paddingVertical: responsiveHeight(1.5),
-    paddingHorizontal: responsiveWidth(4),
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    color: "black",
-    paddingRight: responsiveWidth(8),
-    marginBottom: responsiveHeight(2),
     width: "100%",
+    height: responsiveHeight(6),
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: responsiveHeight(2),
+    paddingHorizontal: responsiveWidth(4),
+    fontSize: responsiveFontSize(16),
   },
   inputAndroid: {
-    fontSize: responsiveFontSize(16),
-    paddingHorizontal: responsiveWidth(4),
-    paddingVertical: responsiveHeight(1.5),
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    color: "black",
-    paddingRight: responsiveWidth(8),
-    marginBottom: responsiveHeight(2),
     width: "100%",
+    height: responsiveHeight(6),
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: responsiveHeight(2),
+    paddingHorizontal: responsiveWidth(4),
+    fontSize: responsiveFontSize(16),
   },
 });
 
 const pickerSelectCountryCodeStyles = StyleSheet.create({
   inputIOS: {
+    width: "100%",
+    height: responsiveHeight(6),
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: responsiveWidth(4),
     fontSize: responsiveFontSize(16),
-    paddingVertical: responsiveHeight(1.5),
-    paddingHorizontal: responsiveWidth(2),
-    color: "black",
   },
   inputAndroid: {
+    width: "100%",
+    height: responsiveHeight(6),
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: responsiveWidth(4),
     fontSize: responsiveFontSize(16),
-    paddingVertical: responsiveHeight(1.5),
-    paddingHorizontal: responsiveWidth(2),
-    color: "black",
   },
 });
 
