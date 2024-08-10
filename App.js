@@ -6,6 +6,7 @@ import PhoneAuthScreen from "./screens/PhoneAuthScreen";
 import OtpVerificationScreen from "./screens/OtpVerificationScreen";
 import RegistrationScreen from "./screens/RegistrationScreen";
 import EmailOtpVerification from "./screens/EmailOtpVerificationScreen";
+import HealthFormScreen from "./screens/HealthFormScreen";
 import HomeTabs from "./screens/HomeTabs"; 
 import LoginScreen from "./screens/LoginScreen";
 
@@ -45,6 +46,11 @@ const App = () => {
           name="EmailOtpVerification"
           component={EmailOtpVerification}
           options={{ title: "Email OTP Verification" }}
+        />
+        <Stack.Screen
+          name="HealthForm"
+          component={HealthFormScreen} 
+          options={{ title: "Health Form" }}
         />
         <Stack.Screen
           name="Home"

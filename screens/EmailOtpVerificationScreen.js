@@ -62,7 +62,7 @@ const EmailOtpVerificationScreen = ({ navigation, route }) => {
 
       if (response.data.message === "Email verified successfully") {
         Alert.alert("Success", "Email verified successfully");
-        navigation.navigate("Home");
+        navigation.navigate("Login");
       } else {
         Alert.alert("Error", response.data.message || "Email verification failed");
       }

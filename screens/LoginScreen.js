@@ -40,15 +40,19 @@ const LoginScreen = ({ navigation }) => {
         }
       );
 
-      // Assuming the backend sends the JWT token in the response
-      const { accessToken } = response.data;
+      // Assuming the backend sends the JWT token and user details in the response
+      const { accessToken, isHealthFormCompleted } = response.data;
       console.log("Login successful, access token:", accessToken);
 
-      // Navigate to the next screen (e.g., home screen) after successful login
-      // navigation.navigate("HomeScreen");
+      // Save the token to AsyncStorage or any other storage as needed
 
-      Alert.alert("Success", "Login successful");
-      navigation.navigate("Home");
+      if (isHealthFormCompleted) {
+        // Navigate to Home if health form is completed
+        navigation.navigate("Home");
+      } else {
+        // Navigate to HealthFormScreen if health form is not completed
+        navigation.navigate("HealthForm");
+      }
     } catch (error) {
       if (error.response) {
         console.error("Response data:", error.response.data);
