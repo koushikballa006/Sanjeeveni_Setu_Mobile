@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from "react-native";
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // Add this import for AsyncStorage
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HealthFormScreen = ({ navigation }) => {
   const [bloodType, setBloodType] = useState("");
@@ -35,16 +35,27 @@ const HealthFormScreen = ({ navigation }) => {
     };
 
     try {
-      // Retrieve the JWT token from AsyncStorage
       const token = await AsyncStorage.getItem("accessToken");
+      // console.log(token)
 
-      const response = await axios.post(
+      await axios.post(
         "http://172.20.10.2:8000/api/users/userprofile/create",
         patientProfile,
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Use the token from AsyncStorage
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      await axios.put(
+        "http://172.20.10.2:8000/api/users/update-profile",
+        { isHealthFormCompleted: true },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -116,9 +127,7 @@ const HealthFormScreen = ({ navigation }) => {
               style={styles.input}
               placeholder={`Relative Name`}
               value={relative.name}
-              onChangeText={(text) =>
-                handleRelativeChange(index, "name", text)
-              }
+              onChangeText={(text) => handleRelativeChange(index, "name", text)}
             />
             <TextInput
               style={styles.input}

@@ -12,6 +12,7 @@ import {
   Platform,
 } from "react-native";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
@@ -30,6 +31,9 @@ const LoginScreen = ({ navigation }) => {
     }
 
     try {
+      // First, remove any existing token
+      await AsyncStorage.removeItem("accessToken");
+
       const response = await axios.post(
         "http://172.20.10.2:8000/api/users/login",
         { username, password },
@@ -42,9 +46,14 @@ const LoginScreen = ({ navigation }) => {
 
       // Assuming the backend sends the JWT token and user details in the response
       const { accessToken, isHealthFormCompleted } = response.data;
-      console.log("Login successful, access token:", accessToken);
+      console.log(
+        "Login successful, access token:",
+        accessToken,
+        isHealthFormCompleted
+      );
 
-      // Save the token to AsyncStorage or any other storage as needed
+      // Store the new token
+      await AsyncStorage.setItem("accessToken", accessToken);
 
       if (isHealthFormCompleted) {
         // Navigate to Home if health form is completed
