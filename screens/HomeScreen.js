@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,18 +8,25 @@ import {
   StyleSheet,
   SafeAreaView,
   Dimensions,
-  Platform,
+  Modal,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
+import ImageUploadScreen from "./ImageUploadScreen";
 
 const { width, height } = Dimensions.get("window");
 
 // Calculate responsive sizes
 const responsiveWidth = (percent) => (width * percent) / 100;
 const responsiveHeight = (percent) => (height * percent) / 100;
-const responsiveFontSize = (size) => (width / 375) * size; // Assuming design is based on 375px width
+const responsiveFontSize = (size) => (width / 375) * size;
 
 const HomeScreen = () => {
+  const [isModalVisible, setModalVisible] = useState(false);
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
@@ -47,7 +54,7 @@ const HomeScreen = () => {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Welcome</Text>
           <View style={styles.addButtonsContainer}>
-            <TouchableOpacity style={styles.addButton}>
+            <TouchableOpacity style={styles.addButton} onPress={toggleModal}>
               <Icon
                 name="file-medical"
                 size={responsiveFontSize(24)}
@@ -105,6 +112,15 @@ const HomeScreen = () => {
           />
         </TouchableOpacity>
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={toggleModal}
+      >
+        <ImageUploadScreen onClose={toggleModal} />
+      </Modal>
     </SafeAreaView>
   );
 };
