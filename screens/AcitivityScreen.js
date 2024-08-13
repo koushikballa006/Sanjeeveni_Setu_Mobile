@@ -11,10 +11,10 @@ import {
   Platform,
   Dimensions,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Notifications from "expo-notifications";
 import * as Permissions from "expo-permissions";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
@@ -25,8 +25,6 @@ const responsiveFontSize = (size) => (width / 375) * size; // Assuming design is
 const MedicalReminderScreen = () => {
   const [medicineName, setMedicineName] = useState("");
   const [dose, setDose] = useState("");
-  const [shape, setShape] = useState("");
-  const [color, setColor] = useState("");
   const [reminderTime, setReminderTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [medicines, setMedicines] = useState([]);
@@ -44,23 +42,45 @@ const MedicalReminderScreen = () => {
     getPermissions();
   }, []);
 
-  const handleAddMedicine = () => {
-    if (medicineName && dose && shape && color && reminderTime) {
+  const handleAddMedicine = async () => {
+    if (medicineName && dose && reminderTime) {
       const newMedicine = {
         name: medicineName,
         dose: dose,
-        shape: shape,
-        color: color,
         time: reminderTime,
       };
-      setMedicines([...medicines, newMedicine]);
-      scheduleNotification(medicineName, reminderTime);
-      setMedicineName("");
-      setDose("");
-      setShape("");
-      setColor("");
-      setReminderTime(new Date());
-      Alert.alert("Medicine Added", "Your medicine schedule has been added.");
+      try {
+        const token = await AsyncStorage.getItem("accessToken");
+        const response = await fetch(
+          "http://172.20.10.2:8000/api/medication-reminders/create",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              medicationName: medicineName,
+              dosage: dose,
+              frequency: "Once a day",
+              nextDose: reminderTime.toISOString(),
+            }),
+          }
+        );
+        const data = await response.json();
+        if (response.ok) {
+          Alert.alert("Success", "Medication reminder created successfully");
+          setMedicines([...medicines, newMedicine]);
+          scheduleNotification(medicineName, reminderTime);
+          setMedicineName("");
+          setDose("");
+          setReminderTime(new Date());
+        } else {
+          Alert.alert("Error", data.message || "Failed to create reminder");
+        }
+      } catch (error) {
+        Alert.alert("Error", "An error occurred. Please try again later.");
+      }
     } else {
       Alert.alert("Error", "Please fill out all fields.");
     }
@@ -105,35 +125,6 @@ const MedicalReminderScreen = () => {
             value={dose}
             onChangeText={setDose}
           />
-          <View
-            style={[styles.pickerContainer, { width: responsiveWidth(80) }]}
-          >
-            <Picker
-              selectedValue={shape}
-              onValueChange={(itemValue) => setShape(itemValue)}
-              style={styles.picker}
-              prompt="Select Shape"
-            >
-              <Picker.Item label="Oval" value="oval" />
-              <Picker.Item label="Round" value="round" />
-              <Picker.Item label="Square" value="square" />
-            </Picker>
-          </View>
-          <View
-            style={[styles.pickerContainer, { width: responsiveWidth(80) }]}
-          >
-            <Picker
-              selectedValue={color}
-              onValueChange={(itemValue) => setColor(itemValue)}
-              style={styles.picker}
-              prompt="Select Color"
-            >
-              <Picker.Item label="Green" value="green" />
-              <Picker.Item label="Red" value="red" />
-              <Picker.Item label="Blue" value="blue" />
-              <Picker.Item label="Pink" value="pink" />
-            </Picker>
-          </View>
           <TouchableOpacity
             onPress={() => setShowTimePicker(true)}
             style={[styles.timePickerButton, { width: responsiveWidth(80) }]}
@@ -232,22 +223,6 @@ const styles = StyleSheet.create({
     marginBottom: responsiveWidth(4),
     backgroundColor: "#fff",
     fontSize: responsiveFontSize(16),
-  },
-  pickerContainer: {
-    borderWidth: responsiveWidth(0.27),
-    borderColor: "#ccc",
-    borderRadius: responsiveWidth(1.3),
-    marginBottom: responsiveWidth(4),
-    backgroundColor: "#fff",
-    ...Platform.select({
-      ios: {
-        paddingLeft: responsiveWidth(2),
-      },
-    }),
-  },
-  picker: {
-    height: responsiveHeight(6.7),
-    width: "100%",
   },
   timePickerButton: {
     backgroundColor: "#4CAF50",
