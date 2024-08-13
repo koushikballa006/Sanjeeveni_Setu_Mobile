@@ -51,6 +51,8 @@ const MedicalReminderScreen = () => {
       };
       try {
         const token = await AsyncStorage.getItem("accessToken");
+        const userId = await AsyncStorage.getItem("userId");
+        console.log(userId)
         const response = await fetch(
           "http://172.20.10.2:8000/api/medication-reminders/create",
           {

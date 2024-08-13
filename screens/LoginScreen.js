@@ -33,6 +33,7 @@ const LoginScreen = ({ navigation }) => {
     try {
       // First, remove any existing token
       await AsyncStorage.removeItem("accessToken");
+      await AsyncStorage.removeItem("userId");
 
       const response = await axios.post(
         "http://172.20.10.2:8000/api/users/login",
@@ -45,15 +46,17 @@ const LoginScreen = ({ navigation }) => {
       );
 
       // Assuming the backend sends the JWT token and user details in the response
-      const { accessToken, isHealthFormCompleted } = response.data;
+      const { accessToken, isHealthFormCompleted,userId } = response.data;
       console.log(
         "Login successful, access token:",
         accessToken,
-        isHealthFormCompleted
+        isHealthFormCompleted,
+        userId
       );
 
       // Store the new token
       await AsyncStorage.setItem("accessToken", accessToken);
+      await AsyncStorage.setItem("userId", userId);
 
       if (isHealthFormCompleted) {
         // Navigate to Home if health form is completed
