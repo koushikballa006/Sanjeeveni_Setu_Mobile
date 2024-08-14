@@ -60,6 +60,17 @@ const HealthFormScreen = ({ navigation }) => {
         }
       );
 
+      await axios.post(
+        "http://172.20.10.2:8000/api/users/generate-qr-code",
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       Alert.alert("Success", "Health information submitted successfully.");
       navigation.navigate("Home");
     } catch (error) {

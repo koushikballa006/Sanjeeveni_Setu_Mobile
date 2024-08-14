@@ -21,7 +21,12 @@ const AccountScreen = ({ onClose, userId }) => {
           const token = await AsyncStorage.getItem("accessToken");
           const userId = await AsyncStorage.getItem("userId");
           console.log(token);
-        const profileResponse = await axios.get(`http://172.20.10.2:8000/api/users/profile/${userId}`);
+        const profileResponse = await axios.get(`http://172.20.10.2:8000/api/users/profile/${userId}`, {
+            headers: {
+            //   "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+          });
         setUserData(profileResponse.data);
 
         const qrResponse = await axios.get(`http://172.20.10.2:8000/api/users/get-qr-code/${userId}`, {
