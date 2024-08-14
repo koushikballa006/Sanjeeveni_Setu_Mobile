@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import ImageUploadScreen from "./ImageUploadScreen";
+import HealthRecordsScreen from "../screens/HealthRecordScreen";
 
 const { width, height } = Dimensions.get("window");
 
@@ -21,10 +22,17 @@ const responsiveHeight = (percent) => (height * percent) / 100;
 const responsiveFontSize = (size) => (width / 375) * size;
 
 const HomeScreen = () => {
-  const [isModalVisible, setModalVisible] = useState(false);
+  const [isImageUploadModalVisible, setImageUploadModalVisible] =
+    useState(false);
+  const [isHealthRecordsModalVisible, setHealthRecordsModalVisible] =
+    useState(false);
 
-  const toggleModal = () => {
-    setModalVisible(!isModalVisible);
+  const toggleImageUploadModal = () => {
+    setImageUploadModalVisible(!isImageUploadModalVisible);
+  };
+
+  const toggleHealthRecordsModal = () => {
+    setHealthRecordsModalVisible(!isHealthRecordsModalVisible);
   };
 
   return (
@@ -54,7 +62,10 @@ const HomeScreen = () => {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Welcome</Text>
           <View style={styles.addButtonsContainer}>
-            <TouchableOpacity style={styles.addButton} onPress={toggleModal}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={toggleImageUploadModal}
+            >
               <Icon
                 name="file-medical"
                 size={responsiveFontSize(24)}
@@ -69,12 +80,15 @@ const HomeScreen = () => {
                 size={responsiveFontSize(24)}
                 color="#4CAF50"
               />
-              <Text style={styles.addButtonText}>Add Medications</Text>
+              <Text style={styles.addButtonText}>Add Prescription</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={toggleHealthRecordsModal}
+        >
           <Icon
             name="file-medical"
             size={responsiveFontSize(24)}
@@ -116,11 +130,15 @@ const HomeScreen = () => {
       <Modal
         animationType="slide"
         transparent={true}
-        visible={isModalVisible}
-        onRequestClose={toggleModal}
+        visible={isImageUploadModalVisible}
+        onRequestClose={toggleImageUploadModal}
       >
-        <ImageUploadScreen onClose={toggleModal} />
+        <ImageUploadScreen onClose={toggleImageUploadModal} />
       </Modal>
+
+      {isHealthRecordsModalVisible && (
+        <HealthRecordsScreen onClose={toggleHealthRecordsModal} />
+      )}
     </SafeAreaView>
   );
 };

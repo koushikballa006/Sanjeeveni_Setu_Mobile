@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,9 +6,10 @@ import {
   StyleSheet,
   SafeAreaView,
   Dimensions,
-  Platform,
+  Modal,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
+import AccountScreen from "./AccountScreen"; // Import the AccountScreen
 
 const { width, height } = Dimensions.get("window");
 
@@ -18,12 +19,18 @@ const responsiveHeight = (percent) => (height * percent) / 100;
 const responsiveFontSize = (size) => (width / 375) * size; // Assuming design is based on 375px width
 
 const SettingsScreen = () => {
+  const [isAccountModalVisible, setAccountModalVisible] = useState(false);
+
+  const toggleAccountModal = () => {
+    setAccountModalVisible(!isAccountModalVisible);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Text style={styles.header}>Settings</Text>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={toggleAccountModal}>
           <Icon name="user" size={responsiveFontSize(24)} color="#4CAF50" />
           <Text style={styles.menuItemText}>Account</Text>
           <Icon
@@ -67,6 +74,15 @@ const SettingsScreen = () => {
           />
         </TouchableOpacity>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isAccountModalVisible}
+        onRequestClose={toggleAccountModal}
+      >
+        <AccountScreen onClose={toggleAccountModal} />
+      </Modal>
     </SafeAreaView>
   );
 };
