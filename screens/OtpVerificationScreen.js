@@ -21,8 +21,8 @@ const responsiveHeight = (percent) => (height * percent) / 100;
 const responsiveFontSize = (size) => (width / 375) * size;
 
 const OtpVerificationScreen = ({ navigation, route }) => {
-  const { userId } = route.params;  // Accessing userId from route.params
-  console.log("Received userId:", userId);  // Logging userId to verify
+  const { userId } = route.params; // Accessing userId from route.params
+  console.log("Received userId:", userId); // Logging userId to verify
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const otpRefs = useRef([]);
@@ -44,28 +44,31 @@ const OtpVerificationScreen = ({ navigation, route }) => {
       Alert.alert("Error", "Please enter a complete OTP");
       return;
     }
-  
+
     console.log("User ID:", userId);
     console.log("OTP Code:", otpCode);
-  
+
     try {
       const response = await axios.post(
-        "http://172.20.10.2:8000/api/users/verify-phone-otp",
-        { userId, otp: otpCode },  // Ensure this format matches the backend
+        "https://sanjeeveni-setu-backend.onrender.com/api/users/verify-phone-otp",
+        { userId, otp: otpCode }, // Ensure this format matches the backend
         {
           headers: {
             "Content-Type": "application/json",
           },
         }
       );
-  
+
       console.log("Response data:", response.data);
-  
+
       if (response.data.message === "Phone number verified successfully") {
         Alert.alert("Success", "OTP verified successfully");
         navigation.navigate("EmailOtpVerification", { userId }); // Pass userId here
       } else {
-        Alert.alert("Error", response.data.message || "OTP verification failed");
+        Alert.alert(
+          "Error",
+          response.data.message || "OTP verification failed"
+        );
       }
     } catch (error) {
       if (error.response) {

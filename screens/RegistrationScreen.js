@@ -64,7 +64,7 @@ const RegistrationScreen = ({ navigation }) => {
     try {
       console.log("Sending request to API with details:", userDetails);
       const response = await axios.post(
-        "http://172.20.10.2:8000/api/users/register",
+        "https://sanjeeveni-setu-backend.onrender.com/api/users/register",
         userDetails,
         {
           headers: {

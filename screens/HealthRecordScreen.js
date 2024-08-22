@@ -37,7 +37,7 @@ const HealthRecordsScreen = ({ onClose }) => {
       const token = await AsyncStorage.getItem("accessToken");
       const userId = await AsyncStorage.getItem("userId"); // Assuming you store the userId
       const response = await axios.get(
-        `http://172.20.10.2:8000/api/documents/user/${userId}`,
+        `https://sanjeeveni-setu-backend.onrender.com/api/documents/user/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -55,7 +55,7 @@ const HealthRecordsScreen = ({ onClose }) => {
     try {
       const token = await AsyncStorage.getItem("accessToken");
       await axios.delete(
-        `http://172.20.10.2:8000/api/documents/${documentId}`,
+        `https://sanjeeveni-setu-backend.onrender.com/api/documents/${documentId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

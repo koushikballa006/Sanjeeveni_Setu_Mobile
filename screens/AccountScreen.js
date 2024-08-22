@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Image } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Image,
+} from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 
 const { width, height } = Dimensions.get("window");
 
@@ -18,23 +24,29 @@ const AccountScreen = ({ onClose, userId }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-          const token = await AsyncStorage.getItem("accessToken");
-          const userId = await AsyncStorage.getItem("userId");
-          console.log(token);
-        const profileResponse = await axios.get(`http://172.20.10.2:8000/api/users/profile/${userId}`, {
+        const token = await AsyncStorage.getItem("accessToken");
+        const userId = await AsyncStorage.getItem("userId");
+        console.log(token);
+        const profileResponse = await axios.get(
+          `https://sanjeeveni-setu-backend.onrender.com/api/users/profile/${userId}`,
+          {
             headers: {
-            //   "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`
+              //   "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
-          });
+          }
+        );
         setUserData(profileResponse.data);
 
-        const qrResponse = await axios.get(`http://172.20.10.2:8000/api/users/get-qr-code/${userId}`, {
+        const qrResponse = await axios.get(
+          `https://sanjeeveni-setu-backend.onrender.com/api/users/get-qr-code/${userId}`,
+          {
             headers: {
-            //   "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`
+              //   "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
-          });
+          }
+        );
         setQrImageUrl(qrResponse.data.qrImageUrl);
       } catch (error) {
         console.error("Error fetching user data or QR code:", error);
@@ -59,10 +71,10 @@ const AadharCard = ({ userData, qrImageUrl }) => (
   <View style={styles.cardContainer}>
     <Text style={styles.cardText}>Name: {userData.fullName}</Text>
     <Text style={styles.cardText}>Gender: {userData.gender}</Text>
-    <Text style={styles.cardText}>Date of Birth: {new Date(userData.dateOfBirth).toLocaleDateString()}</Text>
-    {qrImageUrl && (
-      <Image source={{ uri: qrImageUrl }} style={styles.qrCode} />
-    )}
+    <Text style={styles.cardText}>
+      Date of Birth: {new Date(userData.dateOfBirth).toLocaleDateString()}
+    </Text>
+    {qrImageUrl && <Image source={{ uri: qrImageUrl }} style={styles.qrCode} />}
   </View>
 );
 

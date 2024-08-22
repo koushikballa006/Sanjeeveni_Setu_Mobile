@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -24,10 +24,27 @@ const responsiveWidth = (percent) => (width * percent) / 100;
 const responsiveHeight = (percent) => (height * percent) / 100;
 const responsiveFontSize = (size) => (width / 375) * size;
 
-const ImageUploadScreen = ({ onClose, onUploadSuccess }) => {
+const PrescriptionUploadScreen = ({
+  onClose,
+  onUploadSuccess,
+  initialData,
+}) => {
   const [image, setImage] = useState(null);
+  const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [prescribedBy, setPrescribedBy] = useState("");
+  const [dateTime, setDateTime] = useState(new Date().toISOString());
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name || "");
+      setDescription(initialData.description || "");
+      setPrescribedBy(initialData.prescribedBy || "");
+      setDateTime(initialData.dateTime || new Date().toISOString());
+      setImage(initialData.image || null);
+    }
+  }, [initialData]);
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -60,6 +77,11 @@ const ImageUploadScreen = ({ onClose, onUploadSuccess }) => {
       return;
     }
 
+    if (!name || !prescribedBy) {
+      Alert.alert("Error", "Please provide the required information");
+      return;
+    }
+
     if (!description) {
       Alert.alert("Error", "Please provide a description");
       return;
@@ -71,14 +93,15 @@ const ImageUploadScreen = ({ onClose, onUploadSuccess }) => {
     formData.append("document", {
       uri: image,
       type: "image/jpeg",
-      name: "document.jpg",
+      name: name + ".jpg",
     });
-    formData.append("description", description);
+    formData.append("prescribedBy", prescribedBy);
+    formData.append("dateTime", dateTime);
 
     try {
       const token = await AsyncStorage.getItem("accessToken");
       const response = await axios.post(
-        "https://sanjeeveni-setu-backend.onrender.com/api/documents/upload",
+        "https://sanjeeveni-setu-backend.onrender.com/api/prescription/upload", // Updated endpoint
         formData,
         {
           headers: {
@@ -88,17 +111,19 @@ const ImageUploadScreen = ({ onClose, onUploadSuccess }) => {
         }
       );
 
-      const { newDocument } = response.data;
+      const { newPrescription } = response.data;
       Alert.alert(
         "Success",
-        `Document uploaded successfully\n\nDescription: ${newDocument.description}\nUploaded at: ${new Date(
-          newDocument.dateTime
-        ).toLocaleString()}`,
+        `Prescription uploaded successfully\n\nName: ${
+          newPrescription.name
+        }\nDescription: ${newPrescription.description}\nPrescribed By: ${
+          newPrescription.prescribedBy
+        }\nUploaded at: ${new Date(newPrescription.dateTime).toLocaleString()}`,
         [
           {
             text: "OK",
             onPress: () => {
-              onUploadSuccess(newDocument);
+              onUploadSuccess(newPrescription);
               onClose();
             },
           },
@@ -106,7 +131,7 @@ const ImageUploadScreen = ({ onClose, onUploadSuccess }) => {
       );
     } catch (error) {
       console.error("Upload error:", error);
-      Alert.alert("Error", "Failed to upload document. Please try again.");
+      Alert.alert("Error", "Failed to upload prescription. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -121,16 +146,12 @@ const ImageUploadScreen = ({ onClose, onUploadSuccess }) => {
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
           <Icon name="times" size={responsiveFontSize(24)} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.title}>Upload Document</Text>
+        <Text style={styles.title}>Upload Prescription</Text>
         {image ? (
           <Image source={{ uri: image }} style={styles.image} />
         ) : (
           <View style={styles.imagePlaceholder}>
-            <Icon
-              name="file-image"
-              size={responsiveFontSize(50)}
-              color="#ccc"
-            />
+            <Icon name="pills" size={responsiveFontSize(50)} color="#ccc" />
           </View>
         )}
         <View style={styles.buttonContainer}>
@@ -143,6 +164,18 @@ const ImageUploadScreen = ({ onClose, onUploadSuccess }) => {
             <Text style={styles.buttonText}>Camera</Text>
           </TouchableOpacity>
         </View>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter prescription name"
+          value={name}
+          onChangeText={setName}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter prescribed by"
+          value={prescribedBy}
+          onChangeText={setPrescribedBy}
+        />
         <TextInput
           style={styles.input}
           placeholder="Enter description"
@@ -234,4 +267,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ImageUploadScreen;
+export default PrescriptionUploadScreen;

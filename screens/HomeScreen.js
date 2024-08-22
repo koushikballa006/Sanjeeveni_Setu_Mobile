@@ -13,6 +13,7 @@ import {
 import Icon from "react-native-vector-icons/FontAwesome5";
 import ImageUploadScreen from "./ImageUploadScreen";
 import HealthRecordsScreen from "../screens/HealthRecordScreen";
+import PrescriptionUploadScreen from "../screens/PrescriptionUploadScreen"; // Import your PrescriptionUploadScreen
 
 const { width, height } = Dimensions.get("window");
 
@@ -26,6 +27,8 @@ const HomeScreen = () => {
     useState(false);
   const [isHealthRecordsModalVisible, setHealthRecordsModalVisible] =
     useState(false);
+  const [isPrescriptionUploadModalVisible, setPrescriptionUploadModalVisible] =
+    useState(false);
 
   const toggleImageUploadModal = () => {
     setImageUploadModalVisible(!isImageUploadModalVisible);
@@ -33,6 +36,10 @@ const HomeScreen = () => {
 
   const toggleHealthRecordsModal = () => {
     setHealthRecordsModalVisible(!isHealthRecordsModalVisible);
+  };
+
+  const togglePrescriptionUploadModal = () => {
+    setPrescriptionUploadModalVisible(!isPrescriptionUploadModalVisible);
   };
 
   return (
@@ -74,7 +81,10 @@ const HomeScreen = () => {
               <Text style={styles.addButtonText}>Add Medical Record</Text>
             </TouchableOpacity>
             <View style={styles.separator} />
-            <TouchableOpacity style={styles.addButton}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={togglePrescriptionUploadModal} // Open the PrescriptionUploadScreen modal
+            >
               <Icon
                 name="pills"
                 size={responsiveFontSize(24)}
@@ -134,6 +144,15 @@ const HomeScreen = () => {
         onRequestClose={toggleImageUploadModal}
       >
         <ImageUploadScreen onClose={toggleImageUploadModal} />
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isPrescriptionUploadModalVisible}
+        onRequestClose={togglePrescriptionUploadModal}
+      >
+        <PrescriptionUploadScreen onClose={togglePrescriptionUploadModal} />
       </Modal>
 
       {isHealthRecordsModalVisible && (

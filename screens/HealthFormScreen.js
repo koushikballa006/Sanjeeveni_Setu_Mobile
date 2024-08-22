@@ -39,7 +39,7 @@ const HealthFormScreen = ({ navigation }) => {
       // console.log(token)
 
       await axios.post(
-        "http://172.20.10.2:8000/api/users/userprofile/create",
+        "https://sanjeeveni-setu-backend.onrender.com/api/users/userprofile/create",
         patientProfile,
         {
           headers: {
@@ -50,7 +50,7 @@ const HealthFormScreen = ({ navigation }) => {
       );
 
       await axios.put(
-        "http://172.20.10.2:8000/api/users/update-profile",
+        "https://sanjeeveni-setu-backend.onrender.com/api/users/update-profile",
         { isHealthFormCompleted: true },
         {
           headers: {
@@ -61,7 +61,7 @@ const HealthFormScreen = ({ navigation }) => {
       );
 
       await axios.post(
-        "http://172.20.10.2:8000/api/users/generate-qr-code",
+        "https://sanjeeveni-setu-backend.onrender.com/api/users/generate-qr-code",
         {},
         {
           headers: {

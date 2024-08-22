@@ -36,7 +36,7 @@ const LoginScreen = ({ navigation }) => {
       await AsyncStorage.removeItem("userId");
 
       const response = await axios.post(
-        "http://172.20.10.2:8000/api/users/login",
+        "http://172.20.10.3:8000/api/users/login",
         { username, password },
         {
           headers: {
@@ -46,7 +46,7 @@ const LoginScreen = ({ navigation }) => {
       );
 
       // Assuming the backend sends the JWT token and user details in the response
-      const { accessToken, isHealthFormCompleted,userId } = response.data;
+      const { accessToken, isHealthFormCompleted, userId } = response.data;
       console.log(
         "Login successful, access token:",
         accessToken,

@@ -1,290 +1,317 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  ScrollView,
+  TextInput,
+  Button,
+  Alert,
   StyleSheet,
-  Image,
-  SafeAreaView,
   Dimensions,
+  TouchableOpacity,
+  ScrollView,
 } from "react-native";
-import {
-  LineChart,
-  BarChart,
-  PieChart,
-  ProgressChart,
-} from "react-native-chart-kit";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import Icon from "react-native-vector-icons/FontAwesome5";
+import { LineChart, BarChart } from "react-native-chart-kit";
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
-const MedicalAnalysisScreen = () => {
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Nightingale Score</Text>
-        </View>
+const responsiveWidth = (percent) => (width * percent) / 100;
+const responsiveHeight = (percent) => (height * percent) / 100;
+const responsiveFontSize = (size) => (width / 375) * size;
 
-        <View style={styles.scoreCard}>
-          <Text style={styles.score}>80.2</Text>
-          <Text style={styles.scoreLabel}>Mild Hypertension</Text>
-        </View>
+const DiagnosticsScreen = () => {
+  const [bloodPressure, setBloodPressure] = useState("");
+  const [heartRate, setHeartRate] = useState("");
+  const [glucoseLevel, setGlucoseLevel] = useState("");
+  const [cholesterol, setCholesterol] = useState("");
+  const [date, setDate] = useState("");
+  const [previousMetrics, setPreviousMetrics] = useState([]);
 
-        <View style={styles.overviewSection}>
-          <Text style={styles.sectionTitle}>Health Overview</Text>
+  useEffect(() => {
+    fetchPreviousMetrics();
+  }, []);
 
-          {/* Heart Rate Chart */}
-          <View style={styles.metricItem}>
-            <View style={styles.metricHeader}>
-              <Image
-                source={{
-                  uri: "https://static.vecteezy.com/system/resources/previews/000/285/139/original/heart-symbol-of-love-and-valentine-s-day-flat-red-icon-isolated-on-white-background-vector-illustration-vector.jpg",
-                }}
-                style={styles.icon}
-              />
-              <Text style={styles.metricTitle}>Heart Rate</Text>
-              <Text style={styles.metricValue}>95 bpm</Text>
-            </View>
-            <LineChart
-              data={{
-                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-                datasets: [{ data: [65, 70, 80, 75, 85, 95] }],
-              }}
-              width={width - 40}
-              height={200}
-              chartConfig={{
-                backgroundColor: "#ffffff",
-                backgroundGradientFrom: "#ffffff",
-                backgroundGradientTo: "#ffffff",
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(26, 255, 146, ${opacity})`,
-                style: { borderRadius: 16 },
-              }}
-              bezier
-              style={styles.chart}
-            />
-          </View>
+  const fetchPreviousMetrics = async () => {
+    try {
+      const token = await AsyncStorage.getItem("accessToken");
+      const userId = await AsyncStorage.getItem("userId");
+      const response = await axios.get(
+        `http://172.20.10.3:8000/api/health-metrics/health-metrics/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (Array.isArray(response.data.healthMetrics)) {
+        setPreviousMetrics(response.data.healthMetrics);
+      } else {
+        console.error("Unexpected response format:", response.data);
+        setPreviousMetrics([]);
+      }
+    } catch (error) {
+      console.error("Error fetching previous health metrics:", error);
+      setPreviousMetrics([]);
+    }
+  };
 
-          {/* Blood Pressure Chart */}
-          <View style={styles.metricItem}>
-            <View style={styles.metricHeader}>
-              <Image
-                source={{
-                  uri: "https://th.bing.com/th/id/OIP.L1HNlO5BcPKKD-0C2CnXigHaHa?w=183&h=183&c=7&r=0&o=5&dpr=1.3&pid=1.7",
-                }}
-                style={styles.icon}
-              />
-              <Text style={styles.metricTitle}>Blood Pressure</Text>
-              <Text style={styles.metricValue}>121 mmHg</Text>
-            </View>
-            <BarChart
-              data={{
-                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-                datasets: [{ data: [110, 115, 120, 118, 122, 121] }],
-              }}
-              width={width - 40}
-              height={200}
-              chartConfig={{
-                backgroundColor: "#ffffff",
-                backgroundGradientFrom: "#ffffff",
-                backgroundGradientTo: "#ffffff",
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(255, 26, 26, ${opacity})`,
-                style: { borderRadius: 16 },
-              }}
-              style={styles.chart}
-            />
-          </View>
+  const handleSubmit = async () => {
+    try {
+      const token = await AsyncStorage.getItem("accessToken");
+      if (!token) {
+        Alert.alert("Error", "No access token found");
+        return;
+      }
 
-          {/* Cholesterol Chart */}
-          <View style={styles.metricItem}>
-            <View style={styles.metricHeader}>
-              <Image
-                source={{
-                  uri: "https://th.bing.com/th/id/OIP.LnYp2rjrczFFE_oVRJ9XdgHaHa?rs=1&pid=ImgDetMain",
-                }}
-                style={styles.icon}
-              />
-              <Text style={styles.metricTitle}>Cholesterol</Text>
-              <Text style={styles.metricValue}>180 mg/dL</Text>
-            </View>
-            <ProgressChart
-              data={{
-                labels: ["LDL", "HDL", "Total"],
-                data: [0.6, 0.7, 0.8],
-              }}
-              width={width - 40}
-              height={200}
-              chartConfig={{
-                backgroundColor: "#ffffff",
-                backgroundGradientFrom: "#ffffff",
-                backgroundGradientTo: "#ffffff",
-                decimalPlaces: 2,
-                color: (opacity = 1) => `rgba(255, 136, 0, ${opacity})`,
-                style: { borderRadius: 16 },
-              }}
-              style={styles.chart}
-            />
-          </View>
+      await axios.post(
+        "http://172.20.10.3:8000/api/health-metrics/health-metric",
+        {
+          bloodPressure,
+          heartRate,
+          glucoseLevel,
+          cholesterol,
+          date,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-          {/* Glucose Chart */}
-          <View style={styles.metricItem}>
-            <View style={styles.metricHeader}>
-              <Image
-                source={{
-                  uri: "https://th.bing.com/th/id/OIP.bx0yV3b8pq4DXHb-Z9a0XgHaHa?w=202&h=203&c=7&r=0&o=5&dpr=1.3&pid=1.7",
-                }}
-                style={styles.icon}
-              />
-              <Text style={styles.metricTitle}>Glucose</Text>
-              <Text style={styles.metricValue}>110 mg/dL</Text>
-            </View>
-            <LineChart
-              data={{
-                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-                datasets: [{ data: [100, 105, 110, 108, 112, 110] }],
-              }}
-              width={width - 40}
-              height={200}
-              chartConfig={{
-                backgroundColor: "#ffffff",
-                backgroundGradientFrom: "#ffffff",
-                backgroundGradientTo: "#ffffff",
-                decimalPlaces: 0,
+      // Clear input fields
+      setBloodPressure("");
+      setHeartRate("");
+      setGlucoseLevel("");
+      setCholesterol("");
+      setDate("");
+
+      // Fetch the updated metrics
+      await fetchPreviousMetrics();
+      Alert.alert("Success", "Health metrics submitted and updated.");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to submit health metrics");
+    }
+  };
+
+  const prepareChartData = (metrics) => {
+    const labels = metrics.map((metric) => metric.date.slice(5)); // Use only month and day
+    const bloodPressureSystolic = metrics.map((metric) =>
+      parseInt(metric.bloodPressure.split("/")[0])
+    );
+    const bloodPressureDiastolic = metrics.map((metric) =>
+      parseInt(metric.bloodPressure.split("/")[1])
+    );
+    const heartRates = metrics.map((metric) => metric.heartRate);
+    const glucoseLevels = metrics.map((metric) => metric.glucoseLevel);
+    const cholesterolLevels = metrics.map((metric) => metric.cholesterol);
+
+    return {
+      labels,
+      bloodPressureSystolic,
+      bloodPressureDiastolic,
+      heartRates,
+      glucoseLevels,
+      cholesterolLevels,
+    };
+  };
+
+  const renderCharts = () => {
+    if (!previousMetrics || previousMetrics.length === 0) return null;
+
+    const chartData = prepareChartData(previousMetrics);
+
+    const chartConfig = {
+      backgroundColor: "#ffffff",
+      backgroundGradientFrom: "#ffffff",
+      backgroundGradientTo: "#ffffff",
+      decimalPlaces: 0,
+      color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+      style: {
+        borderRadius: 16,
+      },
+    };
+
+    return (
+      <View style={styles.chartsContainer}>
+        <Text style={styles.chartTitle}>Blood Pressure</Text>
+        <LineChart
+          data={{
+            labels: chartData.labels,
+            datasets: [
+              {
+                data: chartData.bloodPressureSystolic,
                 color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
-                style: { borderRadius: 16 },
-              }}
-              bezier
-              style={styles.chart}
-            />
-          </View>
+                strokeWidth: 2,
+              },
+              {
+                data: chartData.bloodPressureDiastolic,
+                color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`,
+                strokeWidth: 2,
+              },
+            ],
+            legend: ["Systolic", "Diastolic"],
+          }}
+          width={responsiveWidth(90)}
+          height={220}
+          chartConfig={chartConfig}
+          bezier
+          style={styles.chart}
+        />
 
-          {/* Health Breakdown Pie Chart */}
-          <View style={styles.metricItem}>
-            <View style={styles.metricHeader}>
-              <Text style={styles.metricTitle}>Health Breakdown</Text>
-            </View>
-            <PieChart
-              data={[
-                {
-                  name: "Sleep",
-                  population: 25,
-                  color: "#4B0082",
-                  legendFontColor: "#7F7F7F",
-                  legendFontSize: 12,
-                },
-                {
-                  name: "Exercise",
-                  population: 30,
-                  color: "#00BFFF",
-                  legendFontColor: "#7F7F7F",
-                  legendFontSize: 12,
-                },
-                {
-                  name: "Diet",
-                  population: 25,
-                  color: "#32CD32",
-                  legendFontColor: "#7F7F7F",
-                  legendFontSize: 12,
-                },
-                {
-                  name: "Stress",
-                  population: 20,
-                  color: "#FF69B4",
-                  legendFontColor: "#7F7F7F",
-                  legendFontSize: 12,
-                },
-              ]}
-              width={width - 40}
-              height={220}
-              chartConfig={{
-                backgroundColor: "#ffffff",
-                backgroundGradientFrom: "#ffffff",
-                backgroundGradientTo: "#ffffff",
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                style: { borderRadius: 16 },
-              }}
-              accessor="population"
-              backgroundColor="transparent"
-              paddingLeft="15"
-              absolute
-            />
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        <Text style={styles.chartTitle}>Heart Rate</Text>
+        <LineChart
+          data={{
+            labels: chartData.labels,
+            datasets: [{ data: chartData.heartRates }],
+          }}
+          width={responsiveWidth(90)}
+          height={220}
+          chartConfig={{
+            ...chartConfig,
+            color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
+          }}
+          bezier
+          style={styles.chart}
+        />
+
+        <Text style={styles.chartTitle}>Glucose Level</Text>
+        <BarChart
+          data={{
+            labels: chartData.labels,
+            datasets: [{ data: chartData.glucoseLevels }],
+          }}
+          width={responsiveWidth(90)}
+          height={220}
+          chartConfig={{
+            ...chartConfig,
+            color: (opacity = 1) => `rgba(0, 255, 0, ${opacity})`,
+          }}
+          style={styles.chart}
+        />
+
+        <Text style={styles.chartTitle}>Cholesterol</Text>
+        <BarChart
+          data={{
+            labels: chartData.labels,
+            datasets: [{ data: chartData.cholesterolLevels }],
+          }}
+          width={responsiveWidth(90)}
+          height={220}
+          chartConfig={{
+            ...chartConfig,
+            color: (opacity = 1) => `rgba(255, 165, 0, ${opacity})`,
+          }}
+          style={styles.chart}
+        />
+      </View>
+    );
+  };
+
+  return (
+    <ScrollView style={styles.container}>
+      <TouchableOpacity style={styles.closeButton}>
+        <Icon name="times" size={responsiveFontSize(24)} color="#FFFFFF" />
+      </TouchableOpacity>
+      <Text style={styles.header}>Health Metrics</Text>
+
+      <Text style={styles.label}>Blood Pressure:</Text>
+      <TextInput
+        value={bloodPressure}
+        onChangeText={setBloodPressure}
+        placeholder="e.g., 120/80"
+        keyboardType="default"
+        style={styles.input}
+      />
+
+      <Text style={styles.label}>Heart Rate:</Text>
+      <TextInput
+        value={heartRate}
+        onChangeText={(text) => setHeartRate(Number(text))}
+        placeholder="e.g., 72"
+        keyboardType="numeric"
+        style={styles.input}
+      />
+
+      <Text style={styles.label}>Glucose Level:</Text>
+      <TextInput
+        value={glucoseLevel}
+        onChangeText={(text) => setGlucoseLevel(Number(text))}
+        placeholder="e.g., 90"
+        keyboardType="numeric"
+        style={styles.input}
+      />
+
+      <Text style={styles.label}>Cholesterol:</Text>
+      <TextInput
+        value={cholesterol}
+        onChangeText={(text) => setCholesterol(Number(text))}
+        placeholder="e.g., 180"
+        keyboardType="numeric"
+        style={styles.input}
+      />
+
+      <Text style={styles.label}>Date:</Text>
+      <TextInput
+        value={date}
+        onChangeText={setDate}
+        placeholder="e.g., 2024-08-21"
+        keyboardType="default"
+        style={styles.input}
+      />
+
+      <Button title="Submit" onPress={handleSubmit} />
+
+      {renderCharts()}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0f0f0",
+    padding: responsiveWidth(5),
+    backgroundColor: "#F0F8FF",
   },
-  scrollContent: {
-    flexGrow: 1,
+  closeButton: {
+    position: "absolute",
+    top: responsiveHeight(3),
+    right: responsiveWidth(5),
+    zIndex: 1,
   },
   header: {
-    padding: 20,
-    backgroundColor: "#1EB980",
-  },
-  title: {
-    fontSize: 24,
+    fontSize: responsiveFontSize(24),
     fontWeight: "bold",
-    color: "#fff",
+    textAlign: "center",
+    marginBottom: responsiveHeight(2),
   },
-  scoreCard: {
-    alignItems: "center",
-    padding: 20,
-    backgroundColor: "#1EB980",
+  label: {
+    fontSize: responsiveFontSize(16),
+    marginBottom: responsiveHeight(1),
   },
-  score: {
-    fontSize: 48,
+  input: {
+    height: responsiveHeight(6),
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingLeft: responsiveWidth(3),
+    marginBottom: responsiveHeight(2),
+  },
+  chartsContainer: {
+    marginTop: responsiveHeight(5),
+  },
+  chartTitle: {
+    fontSize: responsiveFontSize(18),
     fontWeight: "bold",
-    color: "#fff",
-  },
-  scoreLabel: {
-    fontSize: 18,
-    color: "#fff",
-  },
-  overviewSection: {
-    padding: 20,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    margin: 10,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-  },
-  metricItem: {
-    marginBottom: 30,
-  },
-  metricHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  icon: {
-    width: 24,
-    height: 24,
-    marginRight: 10,
-  },
-  metricTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    flex: 1,
-  },
-  metricValue: {
-    fontSize: 16,
-    fontWeight: "bold",
+    textAlign: "center",
+    marginVertical: responsiveHeight(2),
   },
   chart: {
-    marginVertical: 8,
-    borderRadius: 16,
+    marginVertical: responsiveHeight(2),
   },
 });
 
-export default MedicalAnalysisScreen;
+export default DiagnosticsScreen;

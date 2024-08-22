@@ -21,7 +21,7 @@ const responsiveHeight = (percent) => (height * percent) / 100;
 const responsiveFontSize = (size) => (width / 375) * size;
 
 const EmailOtpVerificationScreen = ({ navigation, route }) => {
-  const { userId } = route.params;  // Accessing userId from route.params
+  const { userId } = route.params; // Accessing userId from route.params
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const otpRefs = useRef([]);
@@ -49,8 +49,8 @@ const EmailOtpVerificationScreen = ({ navigation, route }) => {
 
     try {
       const response = await axios.post(
-        "http://172.20.10.2:8000/api/users/verify-email-otp",
-        { userId, otp: otpCode },  // Ensure this format matches the backend
+        "https://sanjeeveni-setu-backend.onrender.com/api/users/verify-email-otp",
+        { userId, otp: otpCode }, // Ensure this format matches the backend
         {
           headers: {
             "Content-Type": "application/json",
@@ -64,7 +64,10 @@ const EmailOtpVerificationScreen = ({ navigation, route }) => {
         Alert.alert("Success", "Email verified successfully");
         navigation.navigate("Login");
       } else {
-        Alert.alert("Error", response.data.message || "Email verification failed");
+        Alert.alert(
+          "Error",
+          response.data.message || "Email verification failed"
+        );
       }
     } catch (error) {
       if (error.response) {

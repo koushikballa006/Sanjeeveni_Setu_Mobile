@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Notifications from "expo-notifications";
-import * as Permissions from "expo-permissions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
@@ -28,10 +27,11 @@ const MedicalReminderScreen = () => {
   const [reminderTime, setReminderTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [medicines, setMedicines] = useState([]);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const getPermissions = async () => {
-      const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+      const { status } = await Notifications.requestPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
           "Permission Required",
@@ -40,10 +40,16 @@ const MedicalReminderScreen = () => {
       }
     };
     getPermissions();
+
+    const fetchUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem("userId");
+      setUserId(storedUserId);
+    };
+    fetchUserId();
   }, []);
 
   const handleAddMedicine = async () => {
-    if (medicineName && dose && reminderTime) {
+    if (medicineName && dose && reminderTime && userId) {
       const newMedicine = {
         name: medicineName,
         dose: dose,
@@ -51,10 +57,8 @@ const MedicalReminderScreen = () => {
       };
       try {
         const token = await AsyncStorage.getItem("accessToken");
-        const userId = await AsyncStorage.getItem("userId");
-        console.log(userId)
         const response = await fetch(
-          "http://172.20.10.2:8000/api/medication-reminders/create",
+          "https://sanjeeveni-setu-backend.onrender.com/api/medication-reminders/create",
           {
             method: "POST",
             headers: {
@@ -62,6 +66,7 @@ const MedicalReminderScreen = () => {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
+              userId: userId,
               medicationName: medicineName,
               dosage: dose,
               frequency: "Once a day",
