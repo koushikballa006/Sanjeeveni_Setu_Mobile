@@ -4,7 +4,7 @@ import { View, StyleSheet } from "react-native";
 const SplashScreen = ({ onFinish, navigation }) => {
   useEffect(() => {
     onFinish();
-    navigation.navigate("Registration");
+    navigation.navigate("Login");
   }, [onFinish, navigation]);
 
   return <View style={styles.container} />;

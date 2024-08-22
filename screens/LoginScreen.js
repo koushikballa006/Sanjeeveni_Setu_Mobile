@@ -104,9 +104,17 @@ const LoginScreen = ({ navigation }) => {
             onChangeText={setPassword}
             secureTextEntry
           />
+          
           <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
+          <View style={styles.RegisterContainer}>
+          <Text style={styles.registertext}>Not a User?</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Registration")}>
+              <Text style={styles.RegisterLinkText}>Register</Text>
+            </TouchableOpacity>
+          </View>
+          
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -124,11 +132,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: responsiveWidth(4),
   },
+  RegisterContainer:{
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: responsiveHeight(2),
+  },
   title: {
     fontSize: responsiveFontSize(24),
     fontWeight: "bold",
     color: "#4CAF50",
     marginBottom: responsiveHeight(2),
+  },
+  registertext:{
+    color:"#4CAF50",
+    fontWeight: "bold",
+    fontSize: responsiveFontSize(16),
+  },
+  RegisterLinkText:{
+    fontWeight: "bold",
+    fontSize: responsiveFontSize(16),
   },
   input: {
     width: "100%",

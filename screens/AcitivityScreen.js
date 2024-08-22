@@ -46,7 +46,31 @@ const MedicalReminderScreen = () => {
       setUserId(storedUserId);
     };
     fetchUserId();
+    fetchMedicines(); // Fetch existing reminders on component mount
   }, []);
+
+  const fetchMedicines = async () => {
+    try {
+      const token = await AsyncStorage.getItem("accessToken");
+      const response = await fetch(
+        `https://sanjeeveni-setu-backend.onrender.com/api/medication-reminders/user/${userId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setMedicines(data.medicationReminders);
+      } else {
+        Alert.alert("Error", data.message || "Failed to fetch reminders");
+      }
+    } catch (error) {
+      Alert.alert("Error", "An error occurred. Please try again later.");
+    }
+  };
 
   const handleAddMedicine = async () => {
     if (medicineName && dose && reminderTime && userId) {
@@ -90,6 +114,30 @@ const MedicalReminderScreen = () => {
       }
     } else {
       Alert.alert("Error", "Please fill out all fields.");
+    }
+  };
+
+  const handleDeleteMedicine = async (reminderId) => {
+    try {
+      const token = await AsyncStorage.getItem("accessToken");
+      const response = await fetch(
+        `https://sanjeeveni-setu-backend.onrender.com/api/medication-reminders/${reminderId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setMedicines(medicines.filter((medicine) => medicine._id !== reminderId));
+        Alert.alert("Success", "Medication reminder deleted successfully");
+      } else {
+        Alert.alert("Error", data.message || "Failed to delete reminder");
+      }
+    } catch (error) {
+      Alert.alert("Error", "An error occurred. Please try again later.");
     }
   };
 
@@ -165,16 +213,22 @@ const MedicalReminderScreen = () => {
             This Week
           </Text>
           {medicines.map((medicine, index) => (
-            <View key={index} style={styles.medicineCard}>
+            <View key={medicine._id} style={styles.medicineCard}>
               <View style={styles.medicineDetails}>
                 <Text style={styles.medicineName}>{medicine.name}</Text>
                 <Text style={styles.medicineDose}>{medicine.dose}</Text>
                 <Text style={styles.medicineTime}>
-                  {medicine.time.getHours()}:
-                  {medicine.time.getMinutes() < 10 ? "0" : ""}
-                  {medicine.time.getMinutes()}
+                  {new Date(medicine.time).getHours()}:
+                  {new Date(medicine.time).getMinutes() < 10 ? "0" : ""}
+                  {new Date(medicine.time).getMinutes()}
                 </Text>
               </View>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => handleDeleteMedicine(medicine._id)}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
             </View>
           ))}
         </View>
@@ -286,6 +340,18 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(14),
     color: "#888",
   },
+  deleteButton: {
+    backgroundColor: "#FF6F61",
+    borderRadius: responsiveWidth(1.3),
+    padding: responsiveWidth(2),
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
 });
 
 export default MedicalReminderScreen;
+

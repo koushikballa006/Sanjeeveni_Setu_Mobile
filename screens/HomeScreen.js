@@ -11,9 +11,10 @@ import {
   Modal,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import ImageUploadScreen from "./ImageUploadScreen";
+import ImageUploadScreen from "../screens/ImageUploadScreen";
 import HealthRecordsScreen from "../screens/HealthRecordScreen";
-import PrescriptionUploadScreen from "../screens/PrescriptionUploadScreen"; // Import your PrescriptionUploadScreen
+import PrescriptionUploadScreen from "../screens/PrescriptionUploadScreen";
+import MyMedicationsScreen from "../screens/MyMedicationScreen"; // Import your MyMedicationsScreen
 
 const { width, height } = Dimensions.get("window");
 
@@ -23,12 +24,10 @@ const responsiveHeight = (percent) => (height * percent) / 100;
 const responsiveFontSize = (size) => (width / 375) * size;
 
 const HomeScreen = () => {
-  const [isImageUploadModalVisible, setImageUploadModalVisible] =
-    useState(false);
-  const [isHealthRecordsModalVisible, setHealthRecordsModalVisible] =
-    useState(false);
-  const [isPrescriptionUploadModalVisible, setPrescriptionUploadModalVisible] =
-    useState(false);
+  const [isImageUploadModalVisible, setImageUploadModalVisible] = useState(false);
+  const [isHealthRecordsModalVisible, setHealthRecordsModalVisible] = useState(false);
+  const [isPrescriptionUploadModalVisible, setPrescriptionUploadModalVisible] = useState(false);
+  const [isMyMedicationsModalVisible, setMyMedicationsModalVisible] = useState(false); // State for MyMedications modal
 
   const toggleImageUploadModal = () => {
     setImageUploadModalVisible(!isImageUploadModalVisible);
@@ -40,6 +39,10 @@ const HomeScreen = () => {
 
   const togglePrescriptionUploadModal = () => {
     setPrescriptionUploadModalVisible(!isPrescriptionUploadModalVisible);
+  };
+
+  const toggleMyMedicationsModal = () => { // Toggle function for MyMedications modal
+    setMyMedicationsModalVisible(!isMyMedicationsModalVisible);
   };
 
   return (
@@ -112,21 +115,10 @@ const HomeScreen = () => {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
-          <Icon
-            name="clipboard-list"
-            size={responsiveFontSize(24)}
-            color="#4CAF50"
-          />
-          <Text style={styles.menuItemText}>My Health Survey</Text>
-          <Icon
-            name="chevron-right"
-            size={responsiveFontSize(18)}
-            color="#000"
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={toggleMyMedicationsModal} // Open the MyMedicationsScreen modal
+        >
           <Icon name="pills" size={responsiveFontSize(24)} color="#4CAF50" />
           <Text style={styles.menuItemText}>My Medications</Text>
           <Icon
@@ -153,6 +145,15 @@ const HomeScreen = () => {
         onRequestClose={togglePrescriptionUploadModal}
       >
         <PrescriptionUploadScreen onClose={togglePrescriptionUploadModal} />
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isMyMedicationsModalVisible}
+        onRequestClose={toggleMyMedicationsModal} // Close the MyMedications modal
+      >
+        <MyMedicationsScreen onClose={toggleMyMedicationsModal} />
       </Modal>
 
       {isHealthRecordsModalVisible && (
