@@ -60,14 +60,14 @@ const HomeScreen = () => {
         <View style={styles.profileContainer}>
           <Image
             source={{
-              uri: "https://media.licdn.com/dms/image/D5603AQHf8SL1HFNrLA/profile-displayphoto-shrink_200_200/0/1719486559415?e=2147483647&v=beta&t=rdZh5XLwoLmoRn3QQmcf1ZDFYZYiOA2fkAjkXl_o9KY",
+              uri: "https://media.licdn.com/dms/image/v2/D5603AQH_2QkxAnthNw/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1719207900499?e=1729728000&v=beta&t=DlI9bpHvd9Aes7ooWICrURbPPhP1ldOWeVmDj6QLofQ",
             }}
             style={styles.profileImage}
           />
         </View>
 
-        <Text style={styles.name}>Chris Alister</Text>
-        <Text style={styles.updateText}>Hi Chris Alister</Text>
+        <Text style={styles.name}>Koushik Balla</Text>
+        <Text style={styles.updateText}>Hi Koushik Balla</Text>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Welcome</Text>

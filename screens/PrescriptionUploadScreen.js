@@ -101,7 +101,7 @@ const PrescriptionUploadScreen = ({
     try {
       const token = await AsyncStorage.getItem("accessToken");
       const response = await axios.post(
-        "https://sanjeeveni-setu-backend.onrender.com/api/prescription/upload", // Updated endpoint
+        "https://sanjeeveni-setu-backend.onrender.com/api/prescription/upload", 
         formData,
         {
           headers: {

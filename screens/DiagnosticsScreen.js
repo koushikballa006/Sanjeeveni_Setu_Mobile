@@ -9,17 +9,20 @@ import {
   Dimensions,
   TouchableOpacity,
   ScrollView,
+  Modal,
+  SafeAreaView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { LineChart, BarChart } from "react-native-chart-kit";
+import { useTheme } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
 const responsiveWidth = (percent) => (width * percent) / 100;
 const responsiveHeight = (percent) => (height * percent) / 100;
-const responsiveFontSize = (size) => (width / 375) * size;
+const responsiveFontSize = (size) => Math.round((width / 375) * size);
 
 const DiagnosticsScreen = () => {
   const [bloodPressure, setBloodPressure] = useState("");
@@ -28,17 +31,26 @@ const DiagnosticsScreen = () => {
   const [cholesterol, setCholesterol] = useState("");
   const [date, setDate] = useState("");
   const [previousMetrics, setPreviousMetrics] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const { colors } = useTheme(); // For theming
 
   useEffect(() => {
     fetchPreviousMetrics();
   }, []);
+
+  useEffect(() => {
+    if (modalVisible) {
+      const today = new Date().toISOString().split("T")[0];
+      setDate(today);
+    }
+  }, [modalVisible]);
 
   const fetchPreviousMetrics = async () => {
     try {
       const token = await AsyncStorage.getItem("accessToken");
       const userId = await AsyncStorage.getItem("userId");
       const response = await axios.get(
-        `http://172.20.10.3:8000/api/health-metrics/health-metrics/${userId}`,
+        `https://sanjeeveni-setu-backend.onrender.com/api/health-metrics/health-metrics/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -66,7 +78,7 @@ const DiagnosticsScreen = () => {
       }
 
       await axios.post(
-        "http://172.20.10.3:8000/api/health-metrics/health-metric",
+        "https://sanjeeveni-setu-backend.onrender.com/api/health-metrics/health-metric",
         {
           bloodPressure,
           heartRate,
@@ -81,14 +93,13 @@ const DiagnosticsScreen = () => {
         }
       );
 
-      // Clear input fields
       setBloodPressure("");
       setHeartRate("");
       setGlucoseLevel("");
       setCholesterol("");
       setDate("");
+      setModalVisible(false);
 
-      // Fetch the updated metrics
       await fetchPreviousMetrics();
       Alert.alert("Success", "Health metrics submitted and updated.");
     } catch (error) {
@@ -98,7 +109,7 @@ const DiagnosticsScreen = () => {
   };
 
   const prepareChartData = (metrics) => {
-    const labels = metrics.map((metric) => metric.date.slice(5)); // Use only month and day
+    const labels = metrics.map((metric) => metric.date.slice(5));
     const bloodPressureSystolic = metrics.map((metric) =>
       parseInt(metric.bloodPressure.split("/")[0])
     );
@@ -123,15 +134,27 @@ const DiagnosticsScreen = () => {
     if (!previousMetrics || previousMetrics.length === 0) return null;
 
     const chartData = prepareChartData(previousMetrics);
+    const chartWidth = responsiveWidth(90);
+    const chartHeight = responsiveHeight(30);
+
+    const calculateDataPoints = () => {
+      const maxDataPoints = Math.floor(chartWidth / 50);
+      return Math.min(chartData.labels.length, maxDataPoints);
+    };
 
     const chartConfig = {
-      backgroundColor: "#ffffff",
-      backgroundGradientFrom: "#ffffff",
-      backgroundGradientTo: "#ffffff",
+      backgroundColor: colors.background,
+      backgroundGradientFrom: colors.background,
+      backgroundGradientTo: colors.background,
       decimalPlaces: 0,
       color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
       style: {
         borderRadius: 16,
+      },
+      propsForDots: {
+        r: "6",
+        strokeWidth: "2",
+        stroke: "#fff",
       },
     };
 
@@ -140,23 +163,27 @@ const DiagnosticsScreen = () => {
         <Text style={styles.chartTitle}>Blood Pressure</Text>
         <LineChart
           data={{
-            labels: chartData.labels,
+            labels: chartData.labels.slice(-calculateDataPoints()),
             datasets: [
               {
-                data: chartData.bloodPressureSystolic,
+                data: chartData.bloodPressureSystolic.slice(
+                  -calculateDataPoints()
+                ),
                 color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
                 strokeWidth: 2,
               },
               {
-                data: chartData.bloodPressureDiastolic,
+                data: chartData.bloodPressureDiastolic.slice(
+                  -calculateDataPoints()
+                ),
                 color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`,
                 strokeWidth: 2,
               },
             ],
             legend: ["Systolic", "Diastolic"],
           }}
-          width={responsiveWidth(90)}
-          height={220}
+          width={chartWidth}
+          height={chartHeight}
           chartConfig={chartConfig}
           bezier
           style={styles.chart}
@@ -165,11 +192,13 @@ const DiagnosticsScreen = () => {
         <Text style={styles.chartTitle}>Heart Rate</Text>
         <LineChart
           data={{
-            labels: chartData.labels,
-            datasets: [{ data: chartData.heartRates }],
+            labels: chartData.labels.slice(-calculateDataPoints()),
+            datasets: [
+              { data: chartData.heartRates.slice(-calculateDataPoints()) },
+            ],
           }}
-          width={responsiveWidth(90)}
-          height={220}
+          width={chartWidth}
+          height={chartHeight}
           chartConfig={{
             ...chartConfig,
             color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
@@ -181,11 +210,13 @@ const DiagnosticsScreen = () => {
         <Text style={styles.chartTitle}>Glucose Level</Text>
         <BarChart
           data={{
-            labels: chartData.labels,
-            datasets: [{ data: chartData.glucoseLevels }],
+            labels: chartData.labels.slice(-calculateDataPoints()),
+            datasets: [
+              { data: chartData.glucoseLevels.slice(-calculateDataPoints()) },
+            ],
           }}
-          width={responsiveWidth(90)}
-          height={220}
+          width={chartWidth}
+          height={chartHeight}
           chartConfig={{
             ...chartConfig,
             color: (opacity = 1) => `rgba(0, 255, 0, ${opacity})`,
@@ -196,11 +227,15 @@ const DiagnosticsScreen = () => {
         <Text style={styles.chartTitle}>Cholesterol</Text>
         <BarChart
           data={{
-            labels: chartData.labels,
-            datasets: [{ data: chartData.cholesterolLevels }],
+            labels: chartData.labels.slice(-calculateDataPoints()),
+            datasets: [
+              {
+                data: chartData.cholesterolLevels.slice(-calculateDataPoints()),
+              },
+            ],
           }}
-          width={responsiveWidth(90)}
-          height={220}
+          width={chartWidth}
+          height={chartHeight}
           chartConfig={{
             ...chartConfig,
             color: (opacity = 1) => `rgba(255, 165, 0, ${opacity})`,
@@ -212,75 +247,105 @@ const DiagnosticsScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <TouchableOpacity style={styles.closeButton}>
-        <Icon name="times" size={responsiveFontSize(24)} color="#FFFFFF" />
-      </TouchableOpacity>
-      <Text style={styles.header}>Health Metrics</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.header}>Health Metrics</Text>
 
-      <Text style={styles.label}>Blood Pressure:</Text>
-      <TextInput
-        value={bloodPressure}
-        onChangeText={setBloodPressure}
-        placeholder="e.g., 120/80"
-        keyboardType="default"
-        style={styles.input}
-      />
+        <TouchableOpacity
+          style={styles.addMetricsButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={styles.addMetricsButtonText}>Add Health Metrics+</Text>
+        </TouchableOpacity>
 
-      <Text style={styles.label}>Heart Rate:</Text>
-      <TextInput
-        value={heartRate}
-        onChangeText={(text) => setHeartRate(Number(text))}
-        placeholder="e.g., 72"
-        keyboardType="numeric"
-        style={styles.input}
-      />
+        {renderCharts()}
 
-      <Text style={styles.label}>Glucose Level:</Text>
-      <TextInput
-        value={glucoseLevel}
-        onChangeText={(text) => setGlucoseLevel(Number(text))}
-        placeholder="e.g., 90"
-        keyboardType="numeric"
-        style={styles.input}
-      />
+        <Modal
+          visible={modalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <ScrollView contentContainerStyle={styles.modalScrollContent}>
+              <View style={styles.modalContent}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Icon
+                    name="times"
+                    size={responsiveFontSize(24)}
+                    color="#000000"
+                  />
+                </TouchableOpacity>
 
-      <Text style={styles.label}>Cholesterol:</Text>
-      <TextInput
-        value={cholesterol}
-        onChangeText={(text) => setCholesterol(Number(text))}
-        placeholder="e.g., 180"
-        keyboardType="numeric"
-        style={styles.input}
-      />
+                <Text style={styles.modalHeader}>Enter Health Metrics</Text>
 
-      <Text style={styles.label}>Date:</Text>
-      <TextInput
-        value={date}
-        onChangeText={setDate}
-        placeholder="e.g., 2024-08-21"
-        keyboardType="default"
-        style={styles.input}
-      />
+                <Text style={styles.label}>Blood Pressure:</Text>
+                <TextInput
+                  value={bloodPressure}
+                  onChangeText={(text) => setBloodPressure(text)}
+                  placeholder="e.g., 120/80"
+                  keyboardType="default"
+                  style={styles.input}
+                />
 
-      <Button title="Submit" onPress={handleSubmit} />
+                <Text style={styles.label}>Heart Rate:</Text>
+                <TextInput
+                  value={heartRate.toString()}
+                  onChangeText={(text) => setHeartRate(Number(text))}
+                  placeholder="e.g., 72"
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
 
-      {renderCharts()}
-    </ScrollView>
+                <Text style={styles.label}>Glucose Level:</Text>
+                <TextInput
+                  value={glucoseLevel.toString()}
+                  onChangeText={(text) => setGlucoseLevel(Number(text))}
+                  placeholder="e.g., 90"
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+
+                <Text style={styles.label}>Cholesterol:</Text>
+                <TextInput
+                  value={cholesterol.toString()}
+                  onChangeText={(text) => setCholesterol(Number(text))}
+                  placeholder="e.g., 180"
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+
+                <Text style={styles.label}>Date:</Text>
+                <TextInput
+                  value={date}
+                  placeholder="e.g., 2024-08-21"
+                  keyboardType="default"
+                  style={styles.input}
+                  editable={false}
+                />
+
+                <View style={styles.submitButtonContainer}>
+                  <Button title="Submit" onPress={handleSubmit} />
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </Modal>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: responsiveWidth(5),
-    backgroundColor: "#F0F8FF",
   },
-  closeButton: {
-    position: "absolute",
-    top: responsiveHeight(3),
-    right: responsiveWidth(5),
-    zIndex: 1,
+  scrollContent: {
+    flexGrow: 1,
+    padding: responsiveWidth(5),
   },
   header: {
     fontSize: responsiveFontSize(24),
@@ -288,29 +353,77 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: responsiveHeight(2),
   },
-  label: {
-    fontSize: responsiveFontSize(16),
-    marginBottom: responsiveHeight(1),
-  },
-  input: {
-    height: responsiveHeight(6),
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingLeft: responsiveWidth(3),
+  addMetricsButton: {
+    alignSelf: "flex-end",
     marginBottom: responsiveHeight(2),
   },
+  addMetricsButtonText: {
+    fontSize: responsiveFontSize(16),
+    color: "#007bff",
+  },
   chartsContainer: {
-    marginTop: responsiveHeight(5),
+    alignItems: "center",
   },
   chartTitle: {
     fontSize: responsiveFontSize(18),
     fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: responsiveHeight(2),
+    marginTop: responsiveHeight(2),
   },
   chart: {
     marginVertical: responsiveHeight(2),
+    borderRadius: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    width: responsiveWidth(100),
+  },
+  modalContent: {
+    width: responsiveWidth(90),
+    padding: responsiveWidth(5),
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    alignItems: "center",
+    alignSelf: "center",
+  },
+  modalHeader: {
+    fontSize: responsiveFontSize(20),
+    fontWeight: "bold",
+    marginBottom: responsiveHeight(2),
+    textAlign: "center",
+  },
+  label: {
+    fontSize: responsiveFontSize(16),
+    alignSelf: "flex-start",
+    marginBottom: responsiveHeight(1),
+  },
+  input: {
+    width: "100%",
+    padding: responsiveWidth(2),
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: responsiveHeight(2),
+    fontSize: responsiveFontSize(14),
+  },
+  closeButton: {
+    position: "absolute",
+    top: responsiveHeight(1),
+    right: responsiveWidth(1),
+    zIndex: 1,
+    backgroundColor: "#e0e0e0",
+    borderRadius: responsiveWidth(5),
+    padding: responsiveWidth(2),
+  },
+  submitButtonContainer: {
+    width: "100%",
+    marginTop: responsiveHeight(2),
   },
 });
 

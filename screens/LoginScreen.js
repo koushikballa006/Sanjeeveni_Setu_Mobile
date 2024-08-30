@@ -36,7 +36,7 @@ const LoginScreen = ({ navigation }) => {
       await AsyncStorage.removeItem("userId");
 
       const response = await axios.post(
-        "http://172.20.10.3:8000/api/users/login",
+        "https://sanjeeveni-setu-backend.onrender.com/api/users/login",
         { username, password },
         {
           headers: {

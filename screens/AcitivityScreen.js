@@ -46,9 +46,9 @@ const MedicalReminderScreen = () => {
       setUserId(storedUserId);
     };
     fetchUserId();
-    fetchMedicines(); // Fetch existing reminders on component mount
+    fetchMedicines(); 
   }, []);
-
+  console.log(userId);
   const fetchMedicines = async () => {
     try {
       const token = await AsyncStorage.getItem("accessToken");
