@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,25 +9,98 @@ import {
   SafeAreaView,
   Dimensions,
   Modal,
+  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
 import ImageUploadScreen from "../screens/ImageUploadScreen";
 import HealthRecordsScreen from "../screens/HealthRecordScreen";
 import PrescriptionUploadScreen from "../screens/PrescriptionUploadScreen";
-import MyMedicationsScreen from "../screens/MyMedicationScreen"; // Import your MyMedicationsScreen
+import MyMedicationsScreen from "../screens/MyMedicationScreen";
 
 const { width, height } = Dimensions.get("window");
 
-// Calculate responsive sizes
 const responsiveWidth = (percent) => (width * percent) / 100;
 const responsiveHeight = (percent) => (height * percent) / 100;
 const responsiveFontSize = (size) => (width / 375) * size;
+
+const BASE_URL = "https://sanjeeveni-setu-backend.onrender.com/api";
+const NAME_API_URL = "https://sanjeeveni-setu-backend.onrender.com/api/users/profile";
 
 const HomeScreen = () => {
   const [isImageUploadModalVisible, setImageUploadModalVisible] = useState(false);
   const [isHealthRecordsModalVisible, setHealthRecordsModalVisible] = useState(false);
   const [isPrescriptionUploadModalVisible, setPrescriptionUploadModalVisible] = useState(false);
-  const [isMyMedicationsModalVisible, setMyMedicationsModalVisible] = useState(false); // State for MyMedications modal
+  const [isMyMedicationsModalVisible, setMyMedicationsModalVisible] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const fetchUserData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("accessToken");
+      const userId = await AsyncStorage.getItem("userId");
+      console.log("Token:", token);
+      console.log("User ID:", userId);
+
+      if (!token || !userId) {
+        throw new Error("No access token or user ID found");
+      }
+
+      const networkState = await NetInfo.fetch();
+      console.log("Network state:", networkState);
+
+      if (!networkState.isConnected) {
+        throw new Error("No internet connection");
+      }
+
+      // Fetch user profile
+      const profileResponse = await axios.get(`${BASE_URL}/users/userprofile/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        timeout: 10000,
+      });
+
+      console.log("Fetched user profile:", profileResponse.data);
+      setProfileImage(profileResponse.data.profileImageUrl);
+      
+      // Fetch user name
+      const nameResponse = await axios.get(`${NAME_API_URL}/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        timeout: 10000,
+      });
+
+      console.log("Fetched user name:", nameResponse.data);
+      setUsername(nameResponse.data.fullName || "User");
+
+      setError(null);
+      setRetryCount(0);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      setError(error.message);
+      if (retryCount < 3) {
+        console.log(`Retrying... Attempt ${retryCount + 1}`);
+        setRetryCount(prevCount => prevCount + 1);
+        setTimeout(fetchUserData, 5000);
+      } else {
+        Alert.alert("Error", `Failed to fetch user data: ${error.message}`);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [retryCount]);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
 
   const toggleImageUploadModal = () => {
     setImageUploadModalVisible(!isImageUploadModalVisible);
@@ -41,7 +114,7 @@ const HomeScreen = () => {
     setPrescriptionUploadModalVisible(!isPrescriptionUploadModalVisible);
   };
 
-  const toggleMyMedicationsModal = () => { // Toggle function for MyMedications modal
+  const toggleMyMedicationsModal = () => {
     setMyMedicationsModalVisible(!isMyMedicationsModalVisible);
   };
 
@@ -58,16 +131,35 @@ const HomeScreen = () => {
         </View>
 
         <View style={styles.profileContainer}>
-          <Image
-            source={{
-              uri: "https://media.licdn.com/dms/image/v2/D5603AQH_2QkxAnthNw/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1719207900499?e=1729728000&v=beta&t=DlI9bpHvd9Aes7ooWICrURbPPhP1ldOWeVmDj6QLofQ",
-            }}
-            style={styles.profileImage}
-          />
+          {profileImage ? (
+            <Image
+              source={{ uri: profileImage }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <View style={[styles.profileImage, styles.profileImagePlaceholder]}>
+              <Icon name="user" size={responsiveFontSize(40)} color="#A9A9A9" />
+            </View>
+          )}
         </View>
 
-        <Text style={styles.name}>Koushik Balla</Text>
-        <Text style={styles.updateText}>Hi Koushik Balla</Text>
+        <Text style={styles.name}>{username}</Text>
+        <Text style={styles.updateText}>Hi {username}!</Text>
+
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <Text>Loading user profile...</Text>
+          </View>
+        )}
+
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Error: {error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={fetchUserData}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Welcome</Text>
@@ -86,7 +178,7 @@ const HomeScreen = () => {
             <View style={styles.separator} />
             <TouchableOpacity
               style={styles.addButton}
-              onPress={togglePrescriptionUploadModal} // Open the PrescriptionUploadScreen modal
+              onPress={togglePrescriptionUploadModal}
             >
               <Icon
                 name="pills"
@@ -117,7 +209,7 @@ const HomeScreen = () => {
 
         <TouchableOpacity
           style={styles.menuItem}
-          onPress={toggleMyMedicationsModal} // Open the MyMedicationsScreen modal
+          onPress={toggleMyMedicationsModal}
         >
           <Icon name="pills" size={responsiveFontSize(24)} color="#4CAF50" />
           <Text style={styles.menuItemText}>My Medications</Text>
@@ -151,7 +243,7 @@ const HomeScreen = () => {
         animationType="slide"
         transparent={true}
         visible={isMyMedicationsModalVisible}
-        onRequestClose={toggleMyMedicationsModal} // Close the MyMedications modal
+        onRequestClose={toggleMyMedicationsModal}
       >
         <MyMedicationsScreen onClose={toggleMyMedicationsModal} />
       </Modal>
@@ -193,6 +285,11 @@ const styles = StyleSheet.create({
     height: responsiveWidth(35),
     borderRadius: responsiveWidth(17.5),
   },
+  profileImagePlaceholder: {
+    backgroundColor: "#E0E0E0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   name: {
     fontSize: responsiveFontSize(24),
     fontWeight: "bold",
@@ -203,6 +300,32 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#808080",
     marginBottom: responsiveHeight(2),
+  },
+  loadingContainer: {
+    padding: responsiveWidth(4),
+    alignItems: 'center',
+  },
+  errorContainer: {
+    backgroundColor: '#ffcccb',
+    padding: responsiveWidth(4),
+    marginHorizontal: responsiveWidth(2),
+    marginTop: responsiveHeight(2),
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#d8000c',
+    fontSize: responsiveFontSize(14),
+    marginBottom: responsiveHeight(1),
+  },
+  retryButton: {
+    backgroundColor: '#4CAF50',
+    padding: responsiveWidth(2),
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: responsiveFontSize(14),
   },
   card: {
     backgroundColor: "#FFF",

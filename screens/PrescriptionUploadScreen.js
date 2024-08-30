@@ -167,18 +167,21 @@ const PrescriptionUploadScreen = ({
         <TextInput
           style={styles.input}
           placeholder="Enter prescription name"
+          placeholderTextColor="#000000"
           value={name}
           onChangeText={setName}
         />
         <TextInput
           style={styles.input}
           placeholder="Enter prescribed by"
+          placeholderTextColor="#000000"
           value={prescribedBy}
           onChangeText={setPrescribedBy}
         />
         <TextInput
           style={styles.input}
           placeholder="Enter description"
+          placeholderTextColor="#000000"
           value={description}
           onChangeText={setDescription}
         />

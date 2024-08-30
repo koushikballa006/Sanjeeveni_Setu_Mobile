@@ -146,6 +146,7 @@ const ImageUploadScreen = ({ onClose, onUploadSuccess }) => {
         <TextInput
           style={styles.input}
           placeholder="Enter description"
+          placeholderTextColor="#000000"
           value={description}
           onChangeText={setDescription}
         />
