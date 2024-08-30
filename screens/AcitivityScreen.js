@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
-  Platform,
+  ActivityIndicator,
+  RefreshControl,
   Dimensions,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -19,7 +20,7 @@ const { width, height } = Dimensions.get("window");
 
 const responsiveWidth = (percent) => (width * percent) / 100;
 const responsiveHeight = (percent) => (height * percent) / 100;
-const responsiveFontSize = (size) => (width / 375) * size; // Assuming design is based on 375px width
+const responsiveFontSize = (size) => (width / 375) * size;
 
 const MedicalReminderScreen = () => {
   const [medicineName, setMedicineName] = useState("");
@@ -28,32 +29,35 @@ const MedicalReminderScreen = () => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [medicines, setMedicines] = useState([]);
   const [userId, setUserId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const getPermissions = async () => {
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission Required",
-          "Please enable notifications to use this app."
-        );
-      }
-    };
-    getPermissions();
-
-    const fetchUserId = async () => {
-      const storedUserId = await AsyncStorage.getItem("userId");
-      setUserId(storedUserId);
-    };
-    fetchUserId();
-    fetchMedicines(); 
-  }, []);
-  console.log(userId);
-  const fetchMedicines = async () => {
+  const fetchUserId = useCallback(async () => {
     try {
+      const storedUserId = await AsyncStorage.getItem("userId");
+      console.log("Stored User ID:", storedUserId);
+      if (storedUserId) {
+        setUserId(storedUserId);
+        return storedUserId;
+      } else {
+        throw new Error("User ID not found");
+      }
+    } catch (error) {
+      console.error("Error fetching user ID:", error);
+      Alert.alert("Error", "Failed to fetch user information. Please log in again.");
+      return null;
+    }
+  }, []);
+
+  const fetchMedicines = useCallback(async (id) => {
+    try {
+      console.log("Fetching medicines for user ID:", id);
       const token = await AsyncStorage.getItem("accessToken");
+      if (!token) {
+        throw new Error("Access token not found");
+      }
       const response = await fetch(
-        `https://sanjeeveni-setu-backend.onrender.com/api/medication-reminders/user/${userId}`,
+        `https://sanjeeveni-setu-backend.onrender.com/api/medication-reminders/user/${id}`,
         {
           method: "GET",
           headers: {
@@ -61,26 +65,61 @@ const MedicalReminderScreen = () => {
           },
         }
       );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
-      if (response.ok) {
-        setMedicines(data.medicationReminders);
-      } else {
-        Alert.alert("Error", data.message || "Failed to fetch reminders");
+      console.log("Fetched medicines:", data.medicationReminders);
+      setMedicines(data.medicationReminders);
+    } catch (error) {
+      console.error("Error fetching medicines:", error);
+      Alert.alert("Error", "Failed to fetch reminders. Please try again.");
+    }
+  }, []);
+
+  const setup = useCallback(async () => {
+    try {
+      await getPermissions();
+      const id = await fetchUserId();
+      if (id) {
+        await fetchMedicines(id);
       }
     } catch (error) {
-      Alert.alert("Error", "An error occurred. Please try again later.");
+      console.error("Setup error:", error);
+      Alert.alert("Error", "Failed to set up the app. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchUserId, fetchMedicines]);
+
+  useEffect(() => {
+    setup();
+  }, [setup]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await setup();
+    setRefreshing(false);
+  }, [setup]);
+
+  const getPermissions = async () => {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Required",
+        "Please enable notifications to use this app."
+      );
     }
   };
 
   const handleAddMedicine = async () => {
     if (medicineName && dose && reminderTime && userId) {
-      const newMedicine = {
-        name: medicineName,
-        dose: dose,
-        time: reminderTime,
-      };
       try {
+        setIsLoading(true);
         const token = await AsyncStorage.getItem("accessToken");
+        if (!token) {
+          throw new Error("Access token not found");
+        }
         const response = await fetch(
           "https://sanjeeveni-setu-backend.onrender.com/api/medication-reminders/create",
           {
@@ -98,19 +137,22 @@ const MedicalReminderScreen = () => {
             }),
           }
         );
-        const data = await response.json();
-        if (response.ok) {
-          Alert.alert("Success", "Medication reminder created successfully");
-          setMedicines([...medicines, newMedicine]);
-          scheduleNotification(medicineName, reminderTime);
-          setMedicineName("");
-          setDose("");
-          setReminderTime(new Date());
-        } else {
-          Alert.alert("Error", data.message || "Failed to create reminder");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+        console.log("Add medicine response:", data);
+        Alert.alert("Success", "Medication reminder created successfully");
+        await fetchMedicines(userId);
+        setMedicineName("");
+        setDose("");
+        setReminderTime(new Date());
+        await scheduleNotification(medicineName, reminderTime);
       } catch (error) {
-        Alert.alert("Error", "An error occurred. Please try again later.");
+        console.error("Error adding medicine:", error);
+        Alert.alert("Error", "Failed to create reminder. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
     } else {
       Alert.alert("Error", "Please fill out all fields.");
@@ -119,7 +161,11 @@ const MedicalReminderScreen = () => {
 
   const handleDeleteMedicine = async (reminderId) => {
     try {
+      setIsLoading(true);
       const token = await AsyncStorage.getItem("accessToken");
+      if (!token) {
+        throw new Error("Access token not found");
+      }
       const response = await fetch(
         `https://sanjeeveni-setu-backend.onrender.com/api/medication-reminders/${reminderId}`,
         {
@@ -129,43 +175,52 @@ const MedicalReminderScreen = () => {
           },
         }
       );
-      const data = await response.json();
-      if (response.ok) {
-        setMedicines(medicines.filter((medicine) => medicine._id !== reminderId));
-        Alert.alert("Success", "Medication reminder deleted successfully");
-      } else {
-        Alert.alert("Error", data.message || "Failed to delete reminder");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      console.log("Delete medicine response:", await response.json());
+      await fetchMedicines(userId);
+      Alert.alert("Success", "Medication reminder deleted successfully");
     } catch (error) {
-      Alert.alert("Error", "An error occurred. Please try again later.");
+      console.error("Error deleting medicine:", error);
+      Alert.alert("Error", "Failed to delete reminder. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const scheduleNotification = async (medicineName, time) => {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Medicine Reminder",
-        body: `Time to take your medicine: ${medicineName}`,
-      },
-      trigger: {
-        hour: time.getHours(),
-        minute: time.getMinutes(),
-        repeats: true,
-      },
-    });
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Medicine Reminder",
+          body: `Time to take your medicine: ${medicineName}`,
+        },
+        trigger: {
+          hour: time.getHours(),
+          minute: time.getMinutes(),
+          repeats: true,
+        },
+      });
+    } catch (error) {
+      console.error("Error scheduling notification:", error);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Medicine Reminder</Text>
         </View>
 
         <View style={styles.addMedicineSection}>
-          <Text
-            style={[styles.sectionTitle, { fontSize: responsiveFontSize(20) }]}
-          >
+          <Text style={[styles.sectionTitle, { fontSize: responsiveFontSize(20) }]}>
             Add New Medicine
           </Text>
           <TextInput
@@ -207,30 +262,32 @@ const MedicalReminderScreen = () => {
         </View>
 
         <View style={styles.medicineListSection}>
-          <Text
-            style={[styles.sectionTitle, { fontSize: responsiveFontSize(20) }]}
-          >
+          <Text style={[styles.sectionTitle, { fontSize: responsiveFontSize(20) }]}>
             This Week
           </Text>
-          {medicines.map((medicine, index) => (
-            <View key={medicine._id} style={styles.medicineCard}>
-              <View style={styles.medicineDetails}>
-                <Text style={styles.medicineName}>{medicine.name}</Text>
-                <Text style={styles.medicineDose}>{medicine.dose}</Text>
-                <Text style={styles.medicineTime}>
-                  {new Date(medicine.time).getHours()}:
-                  {new Date(medicine.time).getMinutes() < 10 ? "0" : ""}
-                  {new Date(medicine.time).getMinutes()}
-                </Text>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#4CAF50" />
+          ) : medicines.length > 0 ? (
+            medicines.map((medicine) => (
+              <View key={medicine._id} style={styles.medicineCard}>
+                <View style={styles.medicineDetails}>
+                  <Text style={styles.medicineName}>{medicine.medicationName}</Text>
+                  <Text style={styles.medicineDose}>{medicine.dosage}</Text>
+                  <Text style={styles.medicineTime}>
+                    {new Date(medicine.nextDose).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => handleDeleteMedicine(medicine._id)}
+                >
+                  <Text style={styles.deleteButtonText}>Delete</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeleteMedicine(medicine._id)}
-              >
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={styles.noMedicinesText}>No medicines scheduled</Text>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -351,7 +408,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
   },
+  noMedicinesText: {
+    fontSize: responsiveFontSize(16),
+    color: "#888",
+    textAlign: "center",
+    marginTop: responsiveHeight(2),
+  },
 });
 
 export default MedicalReminderScreen;
-
