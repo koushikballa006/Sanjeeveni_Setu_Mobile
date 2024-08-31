@@ -18,7 +18,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.koushikballa06.Sanjeeveni_Setu"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -33,6 +34,11 @@
           "appId": "1:506843184775:web:4dfbb4f0b8c667f48f0222",
           "measurementId": "G-903PJFCT98"
         }
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b103eb4d-2d13-4731-902d-7ac36bd010fc"
       }
     }
   }

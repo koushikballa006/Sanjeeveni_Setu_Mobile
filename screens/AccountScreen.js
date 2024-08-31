@@ -12,7 +12,6 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
-
 const responsiveWidth = (percent) => (width * percent) / 100;
 const responsiveHeight = (percent) => (height * percent) / 100;
 const responsiveFontSize = (size) => (width / 375) * size;
@@ -31,18 +30,15 @@ const AccountScreen = ({ onClose, userId }) => {
           `https://sanjeeveni-setu-backend.onrender.com/api/users/profile/${userId}`,
           {
             headers: {
-              //   "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
           }
         );
         setUserData(profileResponse.data);
-
         const qrResponse = await axios.get(
           `https://sanjeeveni-setu-backend.onrender.com/api/users/get-qr-code/${userId}`,
           {
             headers: {
-              //   "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
           }
@@ -52,14 +48,13 @@ const AccountScreen = ({ onClose, userId }) => {
         console.error("Error fetching user data or QR code:", error);
       }
     };
-
     fetchUserData();
   }, [userId]);
 
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-        <Icon name="times" size={responsiveFontSize(24)} color="#FFFFFF" />
+        <Icon name="times" size={responsiveFontSize(24)} color="#000000" />
       </TouchableOpacity>
       <Text style={styles.header}>Account Details</Text>
       <AadharCard userData={userData} qrImageUrl={qrImageUrl} />
@@ -86,8 +81,6 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignSelf: "flex-end",
-    backgroundColor: "#FF6347",
-    borderRadius: 50,
     padding: responsiveWidth(2),
     marginTop: responsiveHeight(2),
   },
