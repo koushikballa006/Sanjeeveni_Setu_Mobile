@@ -10,6 +10,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -86,36 +87,40 @@ const LoginScreen = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : null}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        <View style={styles.container}>
-          <Text style={styles.title}>Login</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Username or Email"
-            value={username}
-            onChangeText={setUsername}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-          
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Login</Text>
-          </TouchableOpacity>
-          <View style={styles.RegisterContainer}>
-          <Text style={styles.registertext}>Not a User?</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Registration")}>
-              <Text style={styles.RegisterLinkText}>Register</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollViewContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.container}>
+            <Text style={styles.title}>Login</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Username or Email"
+              value={username}
+              onChangeText={setUsername}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+            
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <Text style={styles.loginButtonText}>Login</Text>
             </TouchableOpacity>
+            <View style={styles.RegisterContainer}>
+              <Text style={styles.registertext}>Not a User?</Text>
+              <TouchableOpacity onPress={() => navigation.navigate("Registration")}>
+                <Text style={styles.RegisterLinkText}>Register</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -126,8 +131,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F0F8FF",
   },
-  container: {
+  scrollViewContent: {
     flexGrow: 1,
+    justifyContent: "center",
+  },
+  container: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: responsiveWidth(4),
