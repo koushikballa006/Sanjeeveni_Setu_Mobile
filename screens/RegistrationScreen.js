@@ -32,7 +32,7 @@ const RegistrationScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [countryCode, setCountryCode] = useState("+1"); // Default country code
+  const [countryCode, setCountryCode] = useState("+1");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
 
@@ -41,12 +41,15 @@ const RegistrationScreen = ({ navigation }) => {
       Alert.alert("Error", "Please enter a valid email address");
       return;
     }
-    if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+    if (!validatePassword(password)) {
+      Alert.alert(
+        "Error",
+        "Password must contain at least one uppercase letter, one number, and one special character, and be at least 6 characters long"
+      );
       return;
     }
-    if (password.length < 6) {
-      Alert.alert("Error", "Password should be at least 6 characters long");
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
       return;
     }
 
@@ -75,10 +78,8 @@ const RegistrationScreen = ({ navigation }) => {
 
       console.log("Response data:", response.data);
 
-      // Extract userId from the response
       const { userId } = response.data;
 
-      // Navigate to OTP Verification Screen and pass userId and user details
       navigation.navigate("OtpVerification", { userId, ...userDetails });
 
       Alert.alert("Success", "Registration successful. Please verify OTP.");
@@ -107,6 +108,11 @@ const RegistrationScreen = ({ navigation }) => {
   const validateEmail = (email) => {
     const re = /\S+@\S+\.\S+/;
     return re.test(email);
+  };
+
+  const validatePassword = (password) => {
+    const re = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])(?=.{6,}).*$/;
+    return re.test(password);
   };
 
   const onDateChange = (event, selectedDate) => {
@@ -199,12 +205,11 @@ const RegistrationScreen = ({ navigation }) => {
             <View style={styles.countryCodeContainer}>
               <RNPickerSelect
                 onValueChange={(value) => setCountryCode(value)}
-                placeholder={{ label: "+1", value: "+1" }} // Default country code
+                placeholder={{ label: "+1", value: "+1" }}
                 items={[
                   { label: "+1", value: "+1" },
                   { label: "+44", value: "+44" },
                   { label: "+91", value: "+91" },
-                  // Add more country codes as needed
                 ]}
                 style={pickerSelectCountryCodeStyles}
               />
@@ -230,7 +235,6 @@ const RegistrationScreen = ({ navigation }) => {
             <Text style={styles.registerButtonText}>Register</Text>
           </TouchableOpacity>
 
-          {/* New "Already a user? Login" text */}
           <View style={styles.loginTextContainer}>
             <Text style={styles.alreadyUserText}>Already a user? </Text>
             <TouchableOpacity onPress={() => navigation.navigate("Login")}>
